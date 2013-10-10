@@ -217,6 +217,9 @@ public class OpcodeLogic {
 				go3.setOpcodeType(opcodeType);
 				opcode = go3;
 				break;
+			case SIPUSH:
+				opcode = convertToReferenceOpecode(byteBuffer, opcodeType,true);
+				break;
 			default:
 				break;
 			}

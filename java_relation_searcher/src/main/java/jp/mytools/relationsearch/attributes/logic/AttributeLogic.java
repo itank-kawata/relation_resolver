@@ -3,15 +3,23 @@ package jp.mytools.relationsearch.attributes.logic;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import jp.mytools.relationsearch.attributes.beans.Annotation;
 import jp.mytools.relationsearch.attributes.beans.AnnotationDefaultAttributeInfo;
+import jp.mytools.relationsearch.attributes.beans.AnnotationValue;
 import jp.mytools.relationsearch.attributes.beans.AppendFrame;
+import jp.mytools.relationsearch.attributes.beans.ArrayValue;
 import jp.mytools.relationsearch.attributes.beans.Attribute;
 import jp.mytools.relationsearch.attributes.beans.BootstrapMethodsAttributeInfo;
 import jp.mytools.relationsearch.attributes.beans.ChopFrame;
+import jp.mytools.relationsearch.attributes.beans.ClassInfoValue;
 import jp.mytools.relationsearch.attributes.beans.CodeAttributeInfo;
+import jp.mytools.relationsearch.attributes.beans.ConstValue;
 import jp.mytools.relationsearch.attributes.beans.ConstantValueAttributeInfo;
 import jp.mytools.relationsearch.attributes.beans.DeprecatedAttributeInfo;
+import jp.mytools.relationsearch.attributes.beans.ElementValue;
+import jp.mytools.relationsearch.attributes.beans.ElementValuePair;
 import jp.mytools.relationsearch.attributes.beans.EnclosingMethodAttributeInfo;
+import jp.mytools.relationsearch.attributes.beans.EnumConstValue;
 import jp.mytools.relationsearch.attributes.beans.ExceptionTableInfo;
 import jp.mytools.relationsearch.attributes.beans.ExceptionsAttributeInfo;
 import jp.mytools.relationsearch.attributes.beans.FullFrame;
@@ -115,6 +123,15 @@ public class AttributeLogic {
 			attribute = convertToStackMapTableAttributeInfo(byteBuffer,
 					attributeNameIndex, attributeLength);
 			break;
+		case ENCLOSINGMETHOD:
+			attribute = convertToEnclosingMethod(byteBuffer,attributeNameIndex, attributeLength);
+			break;
+		case SIGNATURE:
+			attribute = convertToSignature(byteBuffer, attributeNameIndex, attributeLength);
+			break;
+		case RUNTIMEVISIBLEANNOTATIONS:
+			attribute = convertToRuntimeVisibleAnnotations(byteBuffer, attributeNameIndex, attributeLength);
+			break;			
 		default:
 			System.out.println("undefined type : " + type.getName());
 			throw new IllegalStateException("undefined type");
@@ -274,18 +291,26 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		InnerClassesAttributeInfo icai = new InnerClassesAttributeInfo();
 		icai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : " + icai.getAttributeNameIndex());
 		icai.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : " + icai.getAttributeLength());
 		icai.setNumberOfClasses(byteBuffer.getShort());
+		System.out.println("\t\t\tNumberOfClasses : " + icai.getNumberOfClasses());
 		if (icai.getNumberOfClasses() > 0) {
 			int i = 0;
 			InnerClasses[] classes = new InnerClasses[icai.getNumberOfClasses()];
 			while (i < icai.getNumberOfClasses()) {
 				InnerClasses clazz = new InnerClasses();
 				clazz.setInnerClassInfoIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\tInnerClassInfoIndex[" + i + "] : " + clazz.getInnerClassInfoIndex());
 				clazz.setOuterClassInfoIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\tInnerOuterClassInfoIndex[" + i + "] : " + clazz.getOuterClassInfoIndex());
 				clazz.setInnerNameIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\tInnerNameIndex[" + i + "] : " + clazz.getInnerNameIndex());
 				clazz.setInnerClassAccessFlags(byteBuffer.getShort());
+				System.out.println("\t\t\t\tInnerClassAccessFlags[" + i + "] : " + clazz.getInnerClassAccessFlags());
 				classes[i] = clazz;
+				i++;
 			}
 			icai.setClasses(classes);
 		}
@@ -373,21 +398,39 @@ public class AttributeLogic {
 		return eai;
 	}
 
-	private EnclosingMethodAttributeInfo convertToEnclosingMethod(
-			ByteBuffer byteBuffer) {
-		return null;
+	private EnclosingMethodAttributeInfo convertToEnclosingMethod(ByteBuffer byteBuffer,int attributeNameIndex, int attributeLength) {
+		EnclosingMethodAttributeInfo ema = new EnclosingMethodAttributeInfo();
+		ema.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : " + ema.getAttributeNameIndex());
+		ema.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : " + ema.getAttributeLength());
+		ema.setClassIndex(byteBuffer.getShort());
+		System.out.println("\t\t\tClassIndex : " + ema.getClassIndex());
+		ema.setMethodIndex(byteBuffer.getShort());
+		System.out.println("\t\t\tMethodIndex : " + ema.getMethodIndex());
+		return ema;
 	}
 
-	private SignatureAttributeInfo convertToSignature(ByteBuffer byteBuffer) {
-		return null;
+	private SignatureAttributeInfo convertToSignature(ByteBuffer byteBuffer,int attributeNameIndex, int attributeLength) {
+		SignatureAttributeInfo sai = new SignatureAttributeInfo();
+		sai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : " + sai.getAttributeNameIndex());
+		sai.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : " + sai.getAttributeLength());
+		sai.setSignatureIndex(byteBuffer.getShort());
+		System.out.println("\t\t\tSignatureIndex : " + sai.getSignatureIndex());
+		return sai;
 	}
 
 	private SourceFileAttributeInfo convertToSourceFile(ByteBuffer byteBuffer,
 			int attributeNameIndex, int attributeLength) {
 		SourceFileAttributeInfo sfai = new SourceFileAttributeInfo();
 		sfai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : " + sfai.getAttributeNameIndex());
 		sfai.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : " + sfai.getAttributeLength());
 		sfai.setSourcefileIndex(byteBuffer.getShort());
+		System.out.println("\t\t\tSourcefileIndex : " + sfai.getSourcefileIndex());
 		return sfai;
 	}
 
@@ -432,9 +475,9 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		LocalVariableTableAttributeInfo lvtai = new LocalVariableTableAttributeInfo();
 		lvtai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : "+ lvtai.getAttributeNameIndex());
 		lvtai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "
-				+ lvtai.getAttributeLength());
+		System.out.println("\t\t\tAttributeLength : "+ lvtai.getAttributeLength());
 		lvtai.setLocalVariableTableLength(byteBuffer.getShort());
 		System.out.println("\t\t\tLocalVariableTableLength : "
 				+ lvtai.getLocalVariableTableLength());
@@ -480,11 +523,100 @@ public class AttributeLogic {
 		return dai;
 	};
 
-	private RuntimeVisibleAnnotationsAttributeInfo convertToRuntimeVisibleAnnotations(
-			ByteBuffer byteBuffer) {
-		return null;
+	private RuntimeVisibleAnnotationsAttributeInfo convertToRuntimeVisibleAnnotations(ByteBuffer byteBuffer,int attributeNameIndex,int attributeLength) {
+		
+		RuntimeVisibleAnnotationsAttributeInfo rvaai = new RuntimeVisibleAnnotationsAttributeInfo();
+		rvaai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : "+ rvaai.getAttributeNameIndex());
+		rvaai.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : "+ rvaai.getAttributeLength());
+		rvaai.setNumAnnotations(byteBuffer.getShort());
+		System.out.println("\t\t\tNumAnnotations : "+ rvaai.getNumAnnotations());
+		
+		if (rvaai.getNumAnnotations() > 0) {
+			Annotation[] annotations = new Annotation[rvaai.getNumAnnotations()];
+			int i = 0;
+			while (i < rvaai.getNumAnnotations()) {
+				Annotation annotation = convertToAnnotation(byteBuffer);
+				annotations[i] = annotation;
+				i++;
+			}
+			rvaai.setAnnotations(annotations);
+		}
+		
+		return rvaai;
 	};
-
+	
+	private Annotation convertToAnnotation(ByteBuffer byteBuffer) {
+		Annotation annotation = new Annotation();
+		annotation.setTypeIndex(byteBuffer.getShort());
+		System.out.println("\t\t\t\tTypeIndex : "+ annotation.getTypeIndex());
+		annotation.setNumElementValuePairs(byteBuffer.getShort());
+		System.out.println("\t\t\t\tNumElementValuePairs : "+ annotation.getNumElementValuePairs());
+		if (annotation.getNumElementValuePairs() > 0) {
+			ElementValuePair[] elementValuePairs = new ElementValuePair[annotation.getNumElementValuePairs()];
+			int i = 0;
+			while (i < annotation.getNumElementValuePairs()){
+				ElementValuePair elementValuePair = new ElementValuePair();
+				elementValuePair.setElementNameIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\t\tElementNameIndex[" + i + "] : "+ elementValuePair.getElementNameIndex());
+				ElementValue elementValue = convertToElementValue(byteBuffer);
+				elementValuePair.setElementNameValue(elementValue);
+				elementValuePairs[i] = elementValuePair;
+				i++;
+			}
+			annotation.setElementValuePairs(elementValuePairs);
+		}
+		return annotation;
+	}
+	
+	private ElementValue convertToElementValue(ByteBuffer byteBuffer) {
+		byte[] tagByte = {byteBuffer.get()};
+		String tag = new String(tagByte);
+//		elementValuePair.setElementNameValue(byteBuffer.getShort());
+		System.out.println("\t\t\t\t\tElementNameValue.tag : "+ tag);
+		ElementValue elementValue = null;
+		if ("s".equals(tag)) {
+			ConstValue constValue = new ConstValue();
+			constValue.setTag(tag);
+			constValue.setConstValueIndex(byteBuffer.getShort());
+			elementValue = constValue;
+		} else if ("e".equals(tag)) {
+			EnumConstValue enumConstValue = new EnumConstValue();
+			enumConstValue.setTag(tag);
+			enumConstValue.setTypeNameIndex(byteBuffer.getShort());
+			enumConstValue.setConstNameIndex(byteBuffer.getShort());
+			elementValue = enumConstValue;
+		} else if ("c".equals(tag)) {
+			ClassInfoValue classInfoValue = new ClassInfoValue();
+			classInfoValue.setTag(tag);
+			classInfoValue.setClassInfoIndex(byteBuffer.getShort());
+			elementValue = classInfoValue;
+		} else if ("@".equals(tag)) {
+			AnnotationValue annotationValue = new AnnotationValue();
+			annotationValue.setTag(tag);
+			annotationValue.setAnnotation(convertToAnnotation(byteBuffer));
+		} else if ("[".equals(tag)) {
+			ArrayValue arrayValue = new ArrayValue();
+			arrayValue.setTag(tag);
+			arrayValue.setNumValues(byteBuffer.getShort());
+			if (arrayValue.getNumValues() > 0) {
+				int i = 0;
+				ElementValue[] elementValues = new ElementValue[arrayValue.getNumValues()];
+				while (i < arrayValue.getNumValues()) {
+					ElementValue elementValue2 = convertToElementValue(byteBuffer);
+					elementValues[i] = elementValue2;
+					i++;
+				}
+				arrayValue.setElementValues(elementValues);
+			}
+		} else {
+			throw new IllegalStateException("tag = " + tag);
+		}
+		
+		return elementValue;
+	}
+	
 	private RuntimeInvisibleAnnotationsAttributeInfo convertToRuntimeInvisibleAnnotations(
 			ByteBuffer byteBuffer) {
 		return null;

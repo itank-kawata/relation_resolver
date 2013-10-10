@@ -166,11 +166,13 @@ public class ClassFileLogic {
 		}
 		
 		result.setAttributesCount(byteBuff.getShort());	// attributes_count(2byte)
+		System.out.println("attributesCount : " + result.getAttributesCount());
 		if (result.getAttributesCount() > 0) {
 			Attribute[] attributes = new Attribute[result.getAttributesCount()];
 			int i = 0;
 			AttributeLogic attributeLogic = new AttributeLogic();
 			while (i < result.getAttributesCount()) {
+				
 				attributes[i] = attributeLogic.convertToAttribute(byteBuff, cpMap);
 				i++;
 			}
