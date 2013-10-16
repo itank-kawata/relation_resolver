@@ -61,7 +61,7 @@ public class ClassFileLogic {
 			int cpTag = byteBuff.get();
 			// constant pool type
 			ConstantPoolType cpType = ConstantPoolType.getByTag(cpTag);
-			System.out.println((processCnt + 1) + " : constantPool(" + cpTag + ") : " + cpType);
+			//System.out.println((processCnt + 1) + " : constantPool(" + cpTag + ") : " + cpType);
 			ConstantPool cp = null;
 			boolean isLongOrDouble = false;
 			switch (cpType) {

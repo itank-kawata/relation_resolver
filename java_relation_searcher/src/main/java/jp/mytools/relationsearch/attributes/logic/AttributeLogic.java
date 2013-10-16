@@ -30,6 +30,7 @@ import jp.mytools.relationsearch.attributes.beans.LineNumberTable;
 import jp.mytools.relationsearch.attributes.beans.LineNumberTableAttributeInfo;
 import jp.mytools.relationsearch.attributes.beans.LocalVariableTable;
 import jp.mytools.relationsearch.attributes.beans.LocalVariableTableAttributeInfo;
+import jp.mytools.relationsearch.attributes.beans.LocalVariableTypeTable;
 import jp.mytools.relationsearch.attributes.beans.LocalVariableTypeTableAttributeInfo;
 import jp.mytools.relationsearch.attributes.beans.ObjectVariableInfo;
 import jp.mytools.relationsearch.attributes.beans.RuntimeInvisibleAnnotationsAttributeInfo;
@@ -131,10 +132,21 @@ public class AttributeLogic {
 			break;
 		case RUNTIMEVISIBLEANNOTATIONS:
 			attribute = convertToRuntimeVisibleAnnotations(byteBuffer, attributeNameIndex, attributeLength);
-			break;			
+			break;
+		case RUNTIMEINVISIBLEANNOTATIONS:
+			attribute = convertToRuntimeInvisibleAnnotations(byteBuffer, attributeNameIndex, attributeLength);
+			break;
+		case LOCALVARIABLETYPETABLE:
+			attribute = convertToLocalVariableTypeTable(byteBuffer, attributeNameIndex, attributeLength);
+			break;
+		case MISSINGTYPES:
+			System.out.println("MISSING_TYPES : length = " + attributeLength);
+			break;
+		case INCONSISTENTHIERARCHY:
+			System.out.println("INCONSISTENTHIERARCHY : length = " + attributeLength);
+			break;
 		default:
-			System.out.println("undefined type : " + type.getName());
-			throw new IllegalStateException("undefined type");
+			throw new IllegalStateException("undefined type : " + type.getName());
 		}
 
 		return attribute;
@@ -511,8 +523,41 @@ public class AttributeLogic {
 	};
 
 	private LocalVariableTypeTableAttributeInfo convertToLocalVariableTypeTable(
-			ByteBuffer byteBuffer) {
-		return null;
+			ByteBuffer byteBuffer,int attributeNameIndex,int attributeLength) {
+		LocalVariableTypeTableAttributeInfo lvttai = new LocalVariableTypeTableAttributeInfo();
+		lvttai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : "+ lvttai.getAttributeNameIndex());
+		lvttai.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : "+ lvttai.getAttributeLength());
+		lvttai.setLocalVariableTypeTableLength(byteBuffer.getShort());
+		System.out.println("\t\t\tLocalVariableTypeTableLength : "
+				+ lvttai.getLocalVariableTypeTableLength());
+		if (lvttai.getLocalVariableTypeTableLength() > 0) {
+			LocalVariableTypeTable[] localVariableTypeTables = new LocalVariableTypeTable[lvttai.getLocalVariableTypeTableLength()];
+			int i = 0;
+			while (i < lvttai.getLocalVariableTypeTableLength()) {
+				LocalVariableTypeTable localVariableTypeTable = new LocalVariableTypeTable();
+				localVariableTypeTable.setStartPc(byteBuffer.getShort());
+				System.out.println("\t\t\t\tStartPc : "
+						+ localVariableTypeTable.getStartPc());
+				localVariableTypeTable.setLength(byteBuffer.getShort());
+				System.out.println("\t\t\t\tLength : "
+						+ localVariableTypeTable.getLength());
+				localVariableTypeTable.setNameIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\tNameIndex : "
+						+ localVariableTypeTable.getNameIndex());
+				localVariableTypeTable.setSignatureIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\tSignatureIndex : "
+						+ localVariableTypeTable.getSignatureIndex());
+				localVariableTypeTable.setIndex(byteBuffer.getShort());
+				System.out.println("\t\t\t\tIndex : "
+						+ localVariableTypeTable.getIndex());
+				localVariableTypeTables[i] = localVariableTypeTable;
+				i++;
+			}
+			lvttai.setLocalVariableTypeTables(localVariableTypeTables);
+		}
+		return lvttai;
 	};
 
 	private DeprecatedAttributeInfo convertToDeprecated(int attributeNameIndex,
@@ -617,9 +662,27 @@ public class AttributeLogic {
 		return elementValue;
 	}
 	
-	private RuntimeInvisibleAnnotationsAttributeInfo convertToRuntimeInvisibleAnnotations(
-			ByteBuffer byteBuffer) {
-		return null;
+	private RuntimeInvisibleAnnotationsAttributeInfo convertToRuntimeInvisibleAnnotations(ByteBuffer byteBuffer,int attributeNameIndex,int attributeLength) {
+		RuntimeInvisibleAnnotationsAttributeInfo riaai = new RuntimeInvisibleAnnotationsAttributeInfo();
+		riaai.setAttributeNameIndex(attributeNameIndex);
+		System.out.println("\t\t\tAttributeNameIndex : "+ riaai.getAttributeNameIndex());
+		riaai.setAttributeLength(attributeLength);
+		System.out.println("\t\t\tAttributeLength : "+ riaai.getAttributeLength());
+		riaai.setNumAnnotations(byteBuffer.getShort());
+		System.out.println("\t\t\tNumAnnotations : "+ riaai.getNumAnnotations());
+		
+		if (riaai.getNumAnnotations() > 0) {
+			Annotation[] annotations = new Annotation[riaai.getNumAnnotations()];
+			int i = 0;
+			while (i < riaai.getNumAnnotations()) {
+				Annotation annotation = convertToAnnotation(byteBuffer);
+				annotations[i] = annotation;
+				i++;
+			}
+			riaai.setAnnotations(annotations);
+		}
+		
+		return riaai;
 	};
 
 	private RuntimeVisibleParameterAnnotationsAttributeInfo convertToRuntimeVisibleParameterAnnotations(

@@ -234,19 +234,28 @@ public class OpcodeLogic {
 		TableSwitchOpecode tso = new TableSwitchOpecode();
 		tso.setOpcodeType(opcodeType);
 		int i = 0;
-		while (i < 4) {
-			System.out.println((byteBuffer.getShort() & 0xff)); // skip zero paddings
+		while (i < 3) {
+			System.out.println("\t\t\t\t\tZeroPadding[" + i + "] : " + (byteBuffer.get() & 0xff)); // skip zero paddings
 			i++;
 		}
+		tso.setDefaultOffset(byteBuffer.getInt());
+		System.out.println("\t\t\t\t\tdefaultOffset : " + tso.getDefaultOffset()); 
+
 		tso.setLow(byteBuffer.getInt());
+		System.out.println("\t\t\t\t\tlow : " + tso.getLow()); 
+
 		tso.setHigh(byteBuffer.getInt());
+		System.out.println("\t\t\t\t\thigh : " + tso.getHigh()); 
+
 		int offsetCount = tso.getHigh() - tso.getLow() + 1;
 		i = 0;
 		int[] offsets = new int[offsetCount];
 		while (i < offsetCount) {
-			offsets[i] = byteBuffer.getInt();
+			offsets[i] = (byteBuffer.getInt());
+			System.out.println("\t\t\t\t\toffset[" + i + "] : " + offsets[i]);
 			i++;
 		}
+		
 		tso.setOffsets(offsets);
 		
 		return tso;

@@ -21,7 +21,9 @@ public enum AttributeType {
 	RUNTIMEVISIBLEPARAMETERANNOTATIONS("RuntimeVisibleParameterAnnotations"),
 	RUNTIMEINVISIBLEPARAMETERANNOTATIONS("RuntimeInvisibleParameterAnnotations"),
 	ANNOTATIONDEFAULT("AnnotationDefault"),
-	BOOTSTRAPMETHODS("BootstrapMethods");
+	BOOTSTRAPMETHODS("BootstrapMethods"),
+	INCONSISTENTHIERARCHY("InconsistentHierarchy"),
+	MISSINGTYPES("MissingTypes");
 	
 	private AttributeType(String name) {
 		this.name = name;
