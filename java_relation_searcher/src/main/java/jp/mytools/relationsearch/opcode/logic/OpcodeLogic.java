@@ -221,7 +221,11 @@ public class OpcodeLogic {
 				opcode = convertToReferenceOpecode(byteBuffer, opcodeType,true);
 				break;
 			default:
+				GeneralOpecode go = new GeneralOpecode();
+				go.setOpcodeType(opcodeType);
+				opcode = go;
 				break;
+				//throw new ClassFileFormatException("Illegal opecode type.undifined opcodeType = " + opcodeType.toString());
 			}
 			
 			opcodeList.add(opcode);
