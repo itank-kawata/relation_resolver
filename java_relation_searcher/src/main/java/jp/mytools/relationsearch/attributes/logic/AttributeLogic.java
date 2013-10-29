@@ -1,7 +1,9 @@
 package jp.mytools.relationsearch.attributes.logic;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import jp.mytools.relationsearch.attributes.beans.Annotation;
 import jp.mytools.relationsearch.attributes.beans.AnnotationDefaultAttributeInfo;
@@ -56,7 +58,19 @@ import jp.mytools.relationsearch.constantpool.beans.Utf8ConstantPool;
 import jp.mytools.relationsearch.opcode.logic.OpcodeLogic;
 
 public class AttributeLogic {
-
+	private static Set<String> constValueIndex = new HashSet<>();
+	static {
+		constValueIndex.add("s");
+		constValueIndex.add("B");
+		constValueIndex.add("C");
+		constValueIndex.add("D");
+		constValueIndex.add("F");
+		constValueIndex.add("I");
+		constValueIndex.add("J");
+		constValueIndex.add("S");
+		constValueIndex.add("Z");
+	}
+	
 	private OpcodeLogic opcodeLogic = new OpcodeLogic();
 
 	public Attribute convertToAttribute(ByteBuffer byteBuffer,
@@ -621,7 +635,7 @@ public class AttributeLogic {
 //		elementValuePair.setElementNameValue(byteBuffer.getShort());
 		System.out.println("\t\t\t\t\tElementNameValue.tag : "+ tag);
 		ElementValue elementValue = null;
-		if ("s".equals(tag)) {
+		if (constValueIndex.contains(tag)) {
 			ConstValue constValue = new ConstValue();
 			constValue.setTag(tag);
 			constValue.setConstValueIndex(byteBuffer.getShort());

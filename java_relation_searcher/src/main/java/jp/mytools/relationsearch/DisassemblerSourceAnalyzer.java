@@ -53,7 +53,7 @@ public class DisassemblerSourceAnalyzer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String dirPath = "/Users/kawata_yusuke/Development/eclipse_workspace/ameba_pr_admin/build/classes";
+		String dirPath = "/Users/kawata_yusuke/Documents/workspace/ameba_pr_admin-4856/build/classes";
 		//String dirPath = "/Users/kawata_yusuke/Development/eclipse_workspace/ameba_pr_admin-4857/build/classes";
 		 DisassemblerSourceAnalyzer executor = new DisassemblerSourceAnalyzer();
 		 try {
