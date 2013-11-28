@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jp.mytools.relationsearch.attributes.beans.Attribute;
 import jp.mytools.relationsearch.attributes.beans.AttributeInfo;
@@ -35,6 +37,8 @@ import jp.mytools.relationsearch.methods.beans.MethodInfo;
 
 public class ClassFileLogic {
 
+	private static Logger logger = LoggerFactory.getLogger(ClassFileLogic.class);
+	
 	public ClassFileInfo convert(byte[] bytes) throws ConstantPoolException, ClassFileFormatException {
 		
 		if (ArrayUtils.isEmpty(bytes)) return null;
@@ -43,16 +47,16 @@ public class ClassFileLogic {
 		ByteBuffer byteBuff = ByteBuffer.wrap(bytes);
 		// magic (4byte)
 		result.setMagic(byteBuff.getInt());
-		System.out.println("magic : " + result.getMagic());
+		logger.debug("magic : " + result.getMagic());
 		// compile minor version (2byte)
 		result.setMinorVersion(byteBuff.getShort());
-		System.out.println("minorVersion : " + result.getMinorVersion());
+		logger.debug("minorVersion : " + result.getMinorVersion());
 		// compile major version  (2byte)
 		result.setMajorVersion(byteBuff.getShort());
-		System.out.println("majorVersion : " + result.getMajorVersion());
+		logger.debug("majorVersion : " + result.getMajorVersion());
 		// constant pool's count  (2byte)
 		result.setConstantPoolCount(byteBuff.getShort() - 1);
-		System.out.println("constantPoolCount : " + result.getConstantPoolCount());
+		logger.debug("constantPoolCount : " + result.getConstantPoolCount());
 
 		int processCnt = 0;
 		Map<Integer,ConstantPool> cpMap = new TreeMap<>();
@@ -61,7 +65,7 @@ public class ClassFileLogic {
 			int cpTag = byteBuff.get();
 			// constant pool type
 			ConstantPoolType cpType = ConstantPoolType.getByTag(cpTag);
-			//System.out.println((processCnt + 1) + " : constantPool(" + cpTag + ") : " + cpType);
+			//logger.debug((processCnt + 1) + " : constantPool(" + cpTag + ") : " + cpType);
 			ConstantPool cp = null;
 			boolean isLongOrDouble = false;
 			switch (cpType) {
@@ -116,26 +120,26 @@ public class ClassFileLogic {
 		
 		result.setConstantPoolMap(cpMap);
 		for (Entry<Integer, ConstantPool> cpEntry : cpMap.entrySet()) {
-			System.out.println(cpEntry.getKey() + ":" + cpEntry.getValue().toString());
+			logger.debug(cpEntry.getKey() + ":" + cpEntry.getValue().toString());
 		}
 		// access_flag(2byte)
 		result.setAccessFlag(byteBuff.getShort());
-		System.out.println("accessFlag : " + result.getAccessFlag());
+		logger.debug("accessFlag : " + result.getAccessFlag());
 		// this_class(2byte)
 		result.setThisClass(byteBuff.getShort());
-		System.out.println("thisClass : " + result.getThisClass());
+		logger.debug("thisClass : " + result.getThisClass());
 		// super_class(2byte)
 		result.setSuperClass(byteBuff.getShort());
-		System.out.println("superClass : " + result.getSuperClass());
+		logger.debug("superClass : " + result.getSuperClass());
 		// interfaces_count(2byte)
 		result.setInterfacesCount(byteBuff.getShort());
-		System.out.println("interfacesCount : " + result.getInterfacesCount());
+		logger.debug("interfacesCount : " + result.getInterfacesCount());
 		if (result.getInterfacesCount() > 0) {
 			int[] interfaces = new int[result.getInterfacesCount()];
 			int i = 0;
 			while (i < result.getInterfacesCount()) {
 				interfaces[i] = byteBuff.getShort();
-				System.out.println("\tßinterfaces[" + i + "] : " + interfaces[i]);
+				logger.debug("\tßinterfaces[" + i + "] : " + interfaces[i]);
 				i++;
 			}
 			// interfaces(2byte * interfaces_count)
@@ -143,7 +147,7 @@ public class ClassFileLogic {
 		}
 		// fields_count(2byte)
 		result.setFieldsCount(byteBuff.getShort());
-		System.out.println("fieldsCount : " + result.getFieldsCount());
+		logger.debug("fieldsCount : " + result.getFieldsCount());
 		if (result.getFieldsCount() > 0) {
 			FieldInfo[] fields = new FieldInfo[result.getFieldsCount()];
 			int i = 0;
@@ -166,7 +170,7 @@ public class ClassFileLogic {
 		}
 		
 		result.setAttributesCount(byteBuff.getShort());	// attributes_count(2byte)
-		System.out.println("attributesCount : " + result.getAttributesCount());
+		logger.debug("attributesCount : " + result.getAttributesCount());
 		if (result.getAttributesCount() > 0) {
 			Attribute[] attributes = new Attribute[result.getAttributesCount()];
 			int i = 0;
@@ -179,21 +183,21 @@ public class ClassFileLogic {
 			result.setAttributes(attributes);
 		}
 		
-		System.out.println("position/limit : " + byteBuff.position() + "/" + byteBuff.limit());
+		logger.debug("position/limit : " + byteBuff.position() + "/" + byteBuff.limit());
 		
 		return result;
 	}
 	
 	private MethodInfo convertToMethodInfo(ByteBuffer byteBuffer , Map<Integer,ConstantPool> cpMap) throws ClassFileFormatException {
-		System.out.println("[MethodInfo]------------------------");
+		logger.debug("[MethodInfo]------------------------");
 		MethodInfo methodInfo = new MethodInfo();
 		methodInfo.setAccessFlags(byteBuffer.getShort());	// access_flags(2byte)
 		methodInfo.setNameIndex(byteBuffer.getShort());
-		System.out.println("\tNameIndex : " + cpMap.get(methodInfo.getNameIndex()).toString());
+		logger.debug("\tNameIndex : " + cpMap.get(methodInfo.getNameIndex()).toString());
 		methodInfo.setDescriptorIndex(byteBuffer.getShort());
-		System.out.println("\tDescriptorIndex : " + cpMap.get(methodInfo.getDescriptorIndex()).toString());
+		logger.debug("\tDescriptorIndex : " + cpMap.get(methodInfo.getDescriptorIndex()).toString());
 		methodInfo.setAttributesCount(byteBuffer.getShort());
-		System.out.println("\tAttributeCount : " + methodInfo.getAttributesCount());
+		logger.debug("\tAttributeCount : " + methodInfo.getAttributesCount());
 		if (methodInfo.getAttributesCount() > 0) {
 			Attribute[] attributes = new AttributeInfo[methodInfo.getAttributesCount()];
 			int i = 0;
@@ -208,15 +212,15 @@ public class ClassFileLogic {
 	}
 	
 	private FieldInfo convertToFieldInfo(ByteBuffer byteBuffer , Map<Integer,ConstantPool> cpMap) throws ClassFileFormatException {
-		System.out.println("[FieldInfo]------------------------");
+		logger.debug("[FieldInfo]------------------------");
 		FieldInfo fieldInfo = new FieldInfo();
 		fieldInfo.setAccessFlags(byteBuffer.getShort());		// access_flags(2byte)
 		fieldInfo.setNameIndex(byteBuffer.getShort());			// name_index(2byte)
-		System.out.println("\tNameIndex : " + cpMap.get(fieldInfo.getNameIndex()).toString());
+		logger.debug("\tNameIndex : " + cpMap.get(fieldInfo.getNameIndex()).toString());
 		fieldInfo.setDescriptorIndex(byteBuffer.getShort());	// descriptorIndex(2byte)
-		System.out.println("\tDescriptorIndex : " + cpMap.get(fieldInfo.getDescriptorIndex()).toString());
+		logger.debug("\tDescriptorIndex : " + cpMap.get(fieldInfo.getDescriptorIndex()).toString());
 		fieldInfo.setAttributeCount(byteBuffer.getShort());		// attributeCount(2byte)
-		System.out.println("\tAttributeCount : " + fieldInfo.getAttributeCount());
+		logger.debug("\tAttributeCount : " + fieldInfo.getAttributeCount());
 		AttributeLogic attributeLogic = new AttributeLogic();
 		if (fieldInfo.getAttributeCount() > 0) {
 			Attribute[] attributes = new Attribute[fieldInfo.getAttributeCount()];
@@ -258,6 +262,7 @@ public class ClassFileLogic {
 			break;
 		case DOUBLE:
 			cp = new DoubleConstantPool();
+			break;
 		default:
 			return null;
 		}

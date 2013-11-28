@@ -5,12 +5,15 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jp.mytools.relationsearch.opcode.enums.OpcodeType;
 
 
 public class OpcodeMapUtil {
 
+	private static Logger logger = LoggerFactory.getLogger(OpcodeMapUtil.class);
 	private static Map<Integer, OpcodeType> opcodeMap = new HashMap<Integer, OpcodeType>();
 
 	private static Set<OpcodeType> hasWideFormatSet = new HashSet<>();
@@ -53,6 +56,9 @@ public class OpcodeMapUtil {
 			case RET:
 				hasWideFormatSet.add(opcodeEnum);
 				break;
+			case WIDE:
+				hasWideFormatSet.add(opcodeEnum);
+				break;
 			case IINC:
 				hasWideConstFormatSet.add(opcodeEnum);
 				break;
@@ -64,7 +70,7 @@ public class OpcodeMapUtil {
 	
 	public static OpcodeType getOpTypeByCode(int code) {
 		if (opcodeMap.containsKey(code) == false) {
-			System.out.println("not defined code : " + code);
+			logger.warn("not defined code : " + code);
 		}
 		return opcodeMap.get(code);
 	}

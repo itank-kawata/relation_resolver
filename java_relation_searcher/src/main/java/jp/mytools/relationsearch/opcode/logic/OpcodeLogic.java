@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jp.mytools.relationsearch.classfile.exceptions.ClassFileFormatException;
 import jp.mytools.relationsearch.opcode.beans.BranchByteOpecode;
 import jp.mytools.relationsearch.opcode.beans.ConstOpecode;
@@ -21,6 +24,9 @@ import jp.mytools.relationsearch.opcode.enums.OpcodeType;
 import jp.mytools.relationsearch.opcode.utils.OpcodeMapUtil;
 
 public class OpcodeLogic {
+	
+	private static Logger logger = LoggerFactory.getLogger(OpcodeLogic.class);
+	
 	public List<Opcode> convertToOpcodeList(ByteBuffer byteBuffer,int codeLength) throws ClassFileFormatException {
 		List<Opcode> opcodeList = new ArrayList<>();
 
@@ -29,7 +35,7 @@ public class OpcodeLogic {
 		while (byteBuffer.position() < startPosition + codeLength) {
 			byte code = byteBuffer.get();
 			OpcodeType opcodeType = OpcodeMapUtil.getOpTypeByCode(code & 0xff);
-			System.out.println("\t\t\tOpecodeType(" + (code & 0xff) + ") : " + opcodeType.toString());
+			logger.debug("\t\t\tOpecodeType(" + (code & 0xff) + ") : " + opcodeType.toString());
 			switch (opcodeType) {
 			case ALOAD:
 				opcode = convertToReferenceOpecode(byteBuffer, opcodeType,false);
@@ -194,7 +200,7 @@ public class OpcodeLogic {
 				} else if (OpcodeMapUtil.hasWideConstFormat(opcodeType)) {
 					opcode = convertToConstOpecode(byteBuffer, opcodeType, true);
 				} else {
-					throw new ClassFileFormatException("Illegal opecode type for wide format.");
+					throw new ClassFileFormatException("Illegal opecode type for wide format. opcodeType = " + opcodeType);
 				}
 				break;
 			case ALOAD_0:
@@ -239,24 +245,24 @@ public class OpcodeLogic {
 		tso.setOpcodeType(opcodeType);
 		int i = 0;
 		while (i < 3) {
-			System.out.println("\t\t\t\t\tZeroPadding[" + i + "] : " + (byteBuffer.get() & 0xff)); // skip zero paddings
+			logger.debug("\t\t\t\t\tZeroPadding[" + i + "] : " + (byteBuffer.get() & 0xff)); // skip zero paddings
 			i++;
 		}
 		tso.setDefaultOffset(byteBuffer.getInt());
-		System.out.println("\t\t\t\t\tdefaultOffset : " + tso.getDefaultOffset()); 
+		logger.debug("\t\t\t\t\tdefaultOffset : " + tso.getDefaultOffset()); 
 
 		tso.setLow(byteBuffer.getInt());
-		System.out.println("\t\t\t\t\tlow : " + tso.getLow()); 
+		logger.debug("\t\t\t\t\tlow : " + tso.getLow()); 
 
 		tso.setHigh(byteBuffer.getInt());
-		System.out.println("\t\t\t\t\thigh : " + tso.getHigh()); 
+		logger.debug("\t\t\t\t\thigh : " + tso.getHigh()); 
 
 		int offsetCount = tso.getHigh() - tso.getLow() + 1;
 		i = 0;
 		int[] offsets = new int[offsetCount];
 		while (i < offsetCount) {
 			offsets[i] = (byteBuffer.getInt());
-			System.out.println("\t\t\t\t\toffset[" + i + "] : " + offsets[i]);
+			logger.debug("\t\t\t\t\toffset[" + i + "] : " + offsets[i]);
 			i++;
 		}
 		
@@ -271,7 +277,7 @@ public class OpcodeLogic {
 		int index = 0;
 		index = byteBuffer.getShort();
 		manao.setIndex(index);
-		System.out.println("\t\t\t\t\tindex : " + index);
+		logger.debug("\t\t\t\t\tindex : " + index);
 		manao.setDimension(byteBuffer.getShort() & 0xff);
 		
 		return manao;
@@ -283,7 +289,7 @@ public class OpcodeLogic {
 		
 		int i = 0;
 		while (i < 4) {
-			System.out.println((byteBuffer.getShort() & 0xff)); // skip zero paddings
+			logger.debug(Integer.toString(byteBuffer.getShort() & 0xff)); // skip zero paddings
 			i++;
 		}
 		
@@ -307,11 +313,11 @@ public class OpcodeLogic {
 		InvokeInterfaceOpecode iio = new InvokeInterfaceOpecode();
 		iio.setOpcodeType(opcodeType);
 		iio.setIndex(byteBuffer.getShort());
-		System.out.println("\t\t\t\t\tindex : " + iio.getIndex());
+		logger.debug("\t\t\t\t\tindex : " + iio.getIndex());
 		iio.setCount(byteBuffer.getShort() & 0xff);
-		System.out.println("\t\t\t\t\tCount" + iio.getCount());
+		logger.debug("\t\t\t\t\tCount" + iio.getCount());
 //		iio.setThirdIndex(byteBuffer.getShort() & 0xff);
-		System.out.println("\t\t\t\t\tThirdIndex" + iio.getThirdIndex());
+		logger.debug("\t\t\t\t\tThirdIndex" + iio.getThirdIndex());
 		return iio;
 	}
 	
@@ -336,7 +342,7 @@ public class OpcodeLogic {
 		}
 		
 		ro.setIndex(index);
-		System.out.println("\t\t\t\t\tindex : " + index);
+		logger.debug("\t\t\t\t\tindex : " + index);
 		return ro;
 	}
 	
@@ -350,7 +356,7 @@ public class OpcodeLogic {
 			bbo.setBranch(byteBuffer.getShort());
 		}
 
-		System.out.println("\t\t\t\t\tBranch : " + bbo.getBranch());
+		logger.debug("\t\t\t\t\tBranch : " + bbo.getBranch());
 
 		return bbo;
 	}
@@ -366,8 +372,8 @@ public class OpcodeLogic {
 			co.setConstValue(byteBuffer.get() & 0xff);
 		}
 		
-		System.out.println("\t\t\t\t\tIndex : " + co.getIndex());
-		System.out.println("\t\t\t\t\tConstValue : " + co.getConstValue());
+		logger.debug("\t\t\t\t\tIndex : " + co.getIndex());
+		logger.debug("\t\t\t\t\tConstValue : " + co.getConstValue());
 		return co;
 	}
 	

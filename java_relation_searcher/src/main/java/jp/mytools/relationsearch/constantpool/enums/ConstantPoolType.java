@@ -37,7 +37,6 @@ public enum ConstantPoolType {
 		for (ConstantPoolType target :ConstantPoolType.values()) {
 			if (target.getTag() == tag) return target;
 		}
-		System.out.println("undifined ConstantPoolTypeTag.tag = " + tag);
 		return null;
 	}
 	

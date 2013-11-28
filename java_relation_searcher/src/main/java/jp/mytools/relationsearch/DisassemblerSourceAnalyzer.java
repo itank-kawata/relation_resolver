@@ -5,14 +5,11 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 
 import jp.mytools.relationsearch.attributes.beans.Attribute;
 import jp.mytools.relationsearch.attributes.beans.CodeAttributeInfo;
@@ -60,7 +57,7 @@ public class DisassemblerSourceAnalyzer {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String dirPath = "/Users/kawata_yusuke/Documents/workspace/14_update_status/target/classes";
+		String dirPath = "/Users/kawata_yusuke/Documents/workspace/ameba_pr_admin/build/classes";
 //		String dirPath = "/Users/kawata_yusuke/Documents/workspace/16_automatic_rating/target/classes";
 		// String dirPath =
 		// "/Users/kawata_yusuke/Development/eclipse_workspace/ameba_pr_admin-4857/build/classes";

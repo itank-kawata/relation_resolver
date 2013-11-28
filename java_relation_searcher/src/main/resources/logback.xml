@@ -18,7 +18,7 @@
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<Target>System.out</Target>
 		<encoder>
-			<Pattern>[%-5level][%d{yyyy-MM-dd HH:mm:ss.SSS}] %class - %msg%n</Pattern>
+			<Pattern>[%-5level] %class - %msg%n</Pattern>
 		</encoder>
 	</appender>
 

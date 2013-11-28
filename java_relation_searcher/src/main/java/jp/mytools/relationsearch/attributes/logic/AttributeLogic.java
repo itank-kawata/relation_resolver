@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jp.mytools.relationsearch.attributes.beans.Annotation;
 import jp.mytools.relationsearch.attributes.beans.AnnotationDefaultAttributeInfo;
 import jp.mytools.relationsearch.attributes.beans.AnnotationValue;
@@ -58,6 +61,9 @@ import jp.mytools.relationsearch.constantpool.beans.Utf8ConstantPool;
 import jp.mytools.relationsearch.opcode.logic.OpcodeLogic;
 
 public class AttributeLogic {
+	
+	private static Logger logger = LoggerFactory.getLogger(AttributeLogic.class ); 
+	
 	private static Set<String> constValueIndex = new HashSet<>();
 	static {
 		constValueIndex.add("s");
@@ -76,7 +82,7 @@ public class AttributeLogic {
 	public Attribute convertToAttribute(ByteBuffer byteBuffer,
 			Map<Integer, ConstantPool> cpMap) throws ClassFileFormatException {
 
-		System.out.println("\tAttribute------------------------");
+		logger.debug("\tAttribute------------------------");
 		int attributeNameIndex = byteBuffer.getShort(); // attribute_name_index(2byte)
 		ConstantPool cp = cpMap.get(attributeNameIndex);
 		if (cp instanceof Utf8ConstantPool == false)
@@ -95,7 +101,7 @@ public class AttributeLogic {
 		int attributeLength = byteBuffer.getInt(); // attribute_length(4byte)
 
 		Attribute attribute = null;
-		System.out.println("\t\ttype : " + type.getName());
+		logger.debug("\t\ttype : " + type.getName());
 		switch (type) {
 		case CONSTANTVALUE:
 			attribute = convertToConstantValue(byteBuffer, attributeNameIndex,
@@ -154,10 +160,10 @@ public class AttributeLogic {
 			attribute = convertToLocalVariableTypeTable(byteBuffer, attributeNameIndex, attributeLength);
 			break;
 		case MISSINGTYPES:
-			System.out.println("MISSING_TYPES : length = " + attributeLength);
+			logger.debug("MISSING_TYPES : length = " + attributeLength);
 			break;
 		case INCONSISTENTHIERARCHY:
-			System.out.println("INCONSISTENTHIERARCHY : length = " + attributeLength);
+			logger.debug("INCONSISTENTHIERARCHY : length = " + attributeLength);
 			break;
 		default:
 			throw new IllegalStateException("undefined type : " + type.getName());
@@ -170,13 +176,13 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		StackMapTableAttributeInfo smtai = new StackMapTableAttributeInfo();
 		smtai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "
+		logger.debug("\t\t\tAttributeNameIndex : "
 				+ smtai.getAttributeNameIndex());
 		smtai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "
+		logger.debug("\t\t\tAttributeLength : "
 				+ smtai.getAttributeLength());
 		smtai.setNumberOfEntries(byteBuffer.getShort());
-		System.out.println("\t\t\tNumberOfEntries : "
+		logger.debug("\t\t\tNumberOfEntries : "
 				+ smtai.getNumberOfEntries());
 
 		if (smtai.getNumberOfEntries() > 0) {
@@ -186,7 +192,7 @@ public class AttributeLogic {
 			while (i < smtai.getNumberOfEntries()) {
 				StackMapFrame smFrame = null;
 				int frameType = (byteBuffer.get() & 0xff);
-				System.out.println("\t\t\t\tframeType : " + frameType);
+				logger.debug("\t\t\t\tframeType : " + frameType);
 				if (frameType >= 0 && frameType <= 63) {
 					SameFrame sf = new SameFrame();
 					sf.setFrameType(frameType);
@@ -206,19 +212,19 @@ public class AttributeLogic {
 					ChopFrame cf = new ChopFrame();
 					cf.setFrameType(frameType);
 					cf.setOffsetDelta(byteBuffer.getShort());
-					System.out.println("\t\t\tOffsetDelta : " + cf.getOffsetDelta());
+					logger.debug("\t\t\tOffsetDelta : " + cf.getOffsetDelta());
 					smFrame = cf;
 				} else if (frameType == 251) {
 					SameFrameExtended sfe = new SameFrameExtended();
 					sfe.setFrameType(frameType);
 					sfe.setOffsetDelta(byteBuffer.getShort());
-					System.out.println("\t\t\tOffsetDelta : " + sfe.getOffsetDelta());
+					logger.debug("\t\t\tOffsetDelta : " + sfe.getOffsetDelta());
 					smFrame = sfe;
 				} else if (frameType >= 252 && frameType <= 254) {
 					AppendFrame af = new AppendFrame();
 					af.setFrameType(frameType);
 					af.setOffsetDelta(byteBuffer.getShort());
-					System.out.println("\t\t\tOffsetDelta : " + af.getOffsetDelta());
+					logger.debug("\t\t\tOffsetDelta : " + af.getOffsetDelta());
 					int localsCount = frameType - 251;
 					VerificationTypeInfo[] locals = new VerificationTypeInfo[localsCount];
 					int j = 0;
@@ -231,11 +237,11 @@ public class AttributeLogic {
 				} else if (frameType == 255) {
 					FullFrame ff = new FullFrame();
 					ff.setFrameType(frameType);
-					System.out.println("\t\t\tFrameType : FullFrame (" + ff.getFrameType() + ")");
+					logger.debug("\t\t\tFrameType : FullFrame (" + ff.getFrameType() + ")");
 					ff.setOffsetDelta(byteBuffer.getShort());
-					System.out.println("\t\t\tOffsetDelta : " + ff.getOffsetDelta());
+					logger.debug("\t\t\tOffsetDelta : " + ff.getOffsetDelta());
 					ff.setNumberOfLocals(byteBuffer.getShort());
-					System.out.println("\t\t\tNumberOfLocals : " + ff.getNumberOfLocals());
+					logger.debug("\t\t\tNumberOfLocals : " + ff.getNumberOfLocals());
 					if (ff.getNumberOfLocals() > 0) {
 						VerificationTypeInfo[] locals = new VerificationTypeInfo[ff.getNumberOfLocals()];
 						int j = 0;
@@ -258,7 +264,7 @@ public class AttributeLogic {
 					
 					smFrame = ff;
 				} else {
-					System.out.println("undefined frameType : " + frameType);
+					logger.debug("undefined frameType : " + frameType);
 					throw new IllegalStateException("undefined frameType.frameType = " + frameType);
 				}
 				
@@ -289,7 +295,7 @@ public class AttributeLogic {
 	private VerificationTypeInfo convertToVerificationTypeInfo(ByteBuffer byteBuffer) {
 
 		int tag = (byteBuffer.get() & 0xff);
-		System.out.println("\t\t\t\t\t\ttag : " + tag);
+		logger.debug("\t\t\t\t\t\ttag : " + tag);
 		VerificationTypeInfo info = null;
 		if (tag >= 0 && tag <= 6) {
 			GeneralVariableInfo gvi = new GeneralVariableInfo();
@@ -299,13 +305,13 @@ public class AttributeLogic {
 			ObjectVariableInfo ovi = new ObjectVariableInfo();
 			ovi.setTag(tag);
 			ovi.setCpoolIndex(byteBuffer.getShort());
-			System.out.println("\t\t\t\t\t\tCpoolIndex : " + ovi.getCpoolIndex());
+			logger.debug("\t\t\t\t\t\tCpoolIndex : " + ovi.getCpoolIndex());
 			info = ovi;
 		} else if (tag == 8) {
 			UninitializedVariableInfo uvi = new UninitializedVariableInfo();
 			uvi.setTag(tag);
 			uvi.setOffset(byteBuffer.getShort());
-			System.out.println("\t\t\t\t\t\tCOffset : " + uvi.getOffset());
+			logger.debug("\t\t\t\t\t\tCOffset : " + uvi.getOffset());
 			info = uvi;
 		} else {
 			throw new IllegalStateException("undefined VerificationTypeInfo tag. tag = " + tag);
@@ -317,24 +323,24 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		InnerClassesAttributeInfo icai = new InnerClassesAttributeInfo();
 		icai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : " + icai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : " + icai.getAttributeNameIndex());
 		icai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : " + icai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : " + icai.getAttributeLength());
 		icai.setNumberOfClasses(byteBuffer.getShort());
-		System.out.println("\t\t\tNumberOfClasses : " + icai.getNumberOfClasses());
+		logger.debug("\t\t\tNumberOfClasses : " + icai.getNumberOfClasses());
 		if (icai.getNumberOfClasses() > 0) {
 			int i = 0;
 			InnerClasses[] classes = new InnerClasses[icai.getNumberOfClasses()];
 			while (i < icai.getNumberOfClasses()) {
 				InnerClasses clazz = new InnerClasses();
 				clazz.setInnerClassInfoIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tInnerClassInfoIndex[" + i + "] : " + clazz.getInnerClassInfoIndex());
+				logger.debug("\t\t\t\tInnerClassInfoIndex[" + i + "] : " + clazz.getInnerClassInfoIndex());
 				clazz.setOuterClassInfoIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tInnerOuterClassInfoIndex[" + i + "] : " + clazz.getOuterClassInfoIndex());
+				logger.debug("\t\t\t\tInnerOuterClassInfoIndex[" + i + "] : " + clazz.getOuterClassInfoIndex());
 				clazz.setInnerNameIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tInnerNameIndex[" + i + "] : " + clazz.getInnerNameIndex());
+				logger.debug("\t\t\t\tInnerNameIndex[" + i + "] : " + clazz.getInnerNameIndex());
 				clazz.setInnerClassAccessFlags(byteBuffer.getShort());
-				System.out.println("\t\t\t\tInnerClassAccessFlags[" + i + "] : " + clazz.getInnerClassAccessFlags());
+				logger.debug("\t\t\t\tInnerClassAccessFlags[" + i + "] : " + clazz.getInnerClassAccessFlags());
 				classes[i] = clazz;
 				i++;
 			}
@@ -348,13 +354,13 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		ConstantValueAttributeInfo cvai = new ConstantValueAttributeInfo();
 		cvai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "
+		logger.debug("\t\t\tAttributeNameIndex : "
 				+ cvai.getAttributeNameIndex());
 		cvai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "
+		logger.debug("\t\t\tAttributeLength : "
 				+ cvai.getAttributeLength());
 		cvai.setConstantvalueIndex(byteBuffer.getShort()); // constantvalue_index(2byte)
-		System.out.println("\t\t\tConstantvalueIndex : "
+		logger.debug("\t\t\tConstantvalueIndex : "
 				+ cvai.getConstantvalueIndex());
 		return cvai;
 	}
@@ -366,11 +372,11 @@ public class AttributeLogic {
 		cai.setAttributeNameIndex(attributeNameIndex);
 		cai.setAttributeLength(attributeLength);
 		cai.setMaxStack(byteBuffer.getShort()); // max_stack(2byte)
-		System.out.println("\t\t\tMaxStack : " + cai.getMaxStack());
+		logger.debug("\t\t\tMaxStack : " + cai.getMaxStack());
 		cai.setMaxLocals(byteBuffer.getShort()); // max_locals(2byte)
-		System.out.println("\t\t\tMaxLocals : " + cai.getMaxStack());
+		logger.debug("\t\t\tMaxLocals : " + cai.getMaxStack());
 		cai.setCodeLength(byteBuffer.getInt()); // code_length(4byte)
-		System.out.println("\t\t\tCodeLength : " + cai.getMaxStack());
+		logger.debug("\t\t\tCodeLength : " + cai.getMaxStack());
 		cai.setOpcodes(opcodeLogic.convertToOpcodeList(byteBuffer,cai.getCodeLength()));
 		cai.setExceptionTableLength(byteBuffer.getShort()); // exception_table_length(2byte)
 		if (cai.getExceptionTableLength() > 0) {
@@ -404,19 +410,19 @@ public class AttributeLogic {
 			int attributeNameIndex, int attributeLength) {
 		ExceptionsAttributeInfo eai = new ExceptionsAttributeInfo();
 		eai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "
+		logger.debug("\t\t\tAttributeNameIndex : "
 				+ eai.getAttributeNameIndex());
 		eai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "
+		logger.debug("\t\t\tAttributeLength : "
 				+ eai.getAttributeLength());
 		eai.setNumberOfExceptions(byteBuffer.getShort());
-		System.out.println("\t\t\tNumberOfExceptions : "
+		logger.debug("\t\t\tNumberOfExceptions : "
 				+ eai.getNumberOfExceptions());
 		int i = 0;
 		int[] exceptionIndexTable = new int[eai.getNumberOfExceptions()];
 		while (i < eai.getNumberOfExceptions()) {
 			exceptionIndexTable[i] = byteBuffer.getShort();
-			System.out.println("\t\t\texceptionIndexTable[" + i + "] : "
+			logger.debug("\t\t\texceptionIndexTable[" + i + "] : "
 					+ exceptionIndexTable[i]);
 			i++;
 		}
@@ -427,24 +433,24 @@ public class AttributeLogic {
 	private EnclosingMethodAttributeInfo convertToEnclosingMethod(ByteBuffer byteBuffer,int attributeNameIndex, int attributeLength) {
 		EnclosingMethodAttributeInfo ema = new EnclosingMethodAttributeInfo();
 		ema.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : " + ema.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : " + ema.getAttributeNameIndex());
 		ema.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : " + ema.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : " + ema.getAttributeLength());
 		ema.setClassIndex(byteBuffer.getShort());
-		System.out.println("\t\t\tClassIndex : " + ema.getClassIndex());
+		logger.debug("\t\t\tClassIndex : " + ema.getClassIndex());
 		ema.setMethodIndex(byteBuffer.getShort());
-		System.out.println("\t\t\tMethodIndex : " + ema.getMethodIndex());
+		logger.debug("\t\t\tMethodIndex : " + ema.getMethodIndex());
 		return ema;
 	}
 
 	private SignatureAttributeInfo convertToSignature(ByteBuffer byteBuffer,int attributeNameIndex, int attributeLength) {
 		SignatureAttributeInfo sai = new SignatureAttributeInfo();
 		sai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : " + sai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : " + sai.getAttributeNameIndex());
 		sai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : " + sai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : " + sai.getAttributeLength());
 		sai.setSignatureIndex(byteBuffer.getShort());
-		System.out.println("\t\t\tSignatureIndex : " + sai.getSignatureIndex());
+		logger.debug("\t\t\tSignatureIndex : " + sai.getSignatureIndex());
 		return sai;
 	}
 
@@ -452,11 +458,11 @@ public class AttributeLogic {
 			int attributeNameIndex, int attributeLength) {
 		SourceFileAttributeInfo sfai = new SourceFileAttributeInfo();
 		sfai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : " + sfai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : " + sfai.getAttributeNameIndex());
 		sfai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : " + sfai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : " + sfai.getAttributeLength());
 		sfai.setSourcefileIndex(byteBuffer.getShort());
-		System.out.println("\t\t\tSourcefileIndex : " + sfai.getSourcefileIndex());
+		logger.debug("\t\t\tSourcefileIndex : " + sfai.getSourcefileIndex());
 		return sfai;
 	}
 
@@ -469,13 +475,13 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		LineNumberTableAttributeInfo lnta = new LineNumberTableAttributeInfo();
 		lnta.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "
+		logger.debug("\t\t\tAttributeNameIndex : "
 				+ lnta.getAttributeNameIndex());
 		lnta.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "
+		logger.debug("\t\t\tAttributeLength : "
 				+ lnta.getAttributeLength());
 		lnta.setLineNumberTableLength(byteBuffer.getShort());
-		System.out.println("\t\t\tLineNumberTableLength : "
+		logger.debug("\t\t\tLineNumberTableLength : "
 				+ lnta.getLineNumberTableLength());
 		if (lnta.getLineNumberTableLength() > 0) {
 			LineNumberTable[] lineNumberTables = new LineNumberTable[lnta
@@ -484,10 +490,10 @@ public class AttributeLogic {
 			while (i < lnta.getLineNumberTableLength()) {
 				LineNumberTable lineNumberTable = new LineNumberTable();
 				lineNumberTable.setStartPc(byteBuffer.getShort());
-				System.out.println("\t\t\t\tStartPc : "
+				logger.debug("\t\t\t\tStartPc : "
 						+ lineNumberTable.getStartPc());
 				lineNumberTable.setLineNumber(byteBuffer.getShort());
-				System.out.println("\t\t\t\tLineNumber : "
+				logger.debug("\t\t\t\tLineNumber : "
 						+ lineNumberTable.getLineNumber());
 				lineNumberTables[i] = lineNumberTable;
 				i++;
@@ -501,11 +507,11 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer, int attributeNameIndex, int attributeLength) {
 		LocalVariableTableAttributeInfo lvtai = new LocalVariableTableAttributeInfo();
 		lvtai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "+ lvtai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : "+ lvtai.getAttributeNameIndex());
 		lvtai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "+ lvtai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : "+ lvtai.getAttributeLength());
 		lvtai.setLocalVariableTableLength(byteBuffer.getShort());
-		System.out.println("\t\t\tLocalVariableTableLength : "
+		logger.debug("\t\t\tLocalVariableTableLength : "
 				+ lvtai.getLocalVariableTableLength());
 		if (lvtai.getLocalVariableTableLength() > 0) {
 			LocalVariableTable[] localVariableTables = new LocalVariableTable[lvtai
@@ -514,19 +520,19 @@ public class AttributeLogic {
 			while (i < lvtai.getLocalVariableTableLength()) {
 				LocalVariableTable localVariableTable = new LocalVariableTable();
 				localVariableTable.setStartPc(byteBuffer.getShort());
-				System.out.println("\t\t\t\tStartPc : "
+				logger.debug("\t\t\t\tStartPc : "
 						+ localVariableTable.getStartPc());
 				localVariableTable.setLength(byteBuffer.getShort());
-				System.out.println("\t\t\t\tLength : "
+				logger.debug("\t\t\t\tLength : "
 						+ localVariableTable.getLength());
 				localVariableTable.setNameIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tNameIndex : "
+				logger.debug("\t\t\t\tNameIndex : "
 						+ localVariableTable.getNameIndex());
 				localVariableTable.setDescriptorIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tDescriptorIndex : "
+				logger.debug("\t\t\t\tDescriptorIndex : "
 						+ localVariableTable.getDescriptorIndex());
 				localVariableTable.setIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tIndex : "
+				logger.debug("\t\t\t\tIndex : "
 						+ localVariableTable.getIndex());
 				localVariableTables[i] = localVariableTable;
 				i++;
@@ -540,11 +546,11 @@ public class AttributeLogic {
 			ByteBuffer byteBuffer,int attributeNameIndex,int attributeLength) {
 		LocalVariableTypeTableAttributeInfo lvttai = new LocalVariableTypeTableAttributeInfo();
 		lvttai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "+ lvttai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : "+ lvttai.getAttributeNameIndex());
 		lvttai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "+ lvttai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : "+ lvttai.getAttributeLength());
 		lvttai.setLocalVariableTypeTableLength(byteBuffer.getShort());
-		System.out.println("\t\t\tLocalVariableTypeTableLength : "
+		logger.debug("\t\t\tLocalVariableTypeTableLength : "
 				+ lvttai.getLocalVariableTypeTableLength());
 		if (lvttai.getLocalVariableTypeTableLength() > 0) {
 			LocalVariableTypeTable[] localVariableTypeTables = new LocalVariableTypeTable[lvttai.getLocalVariableTypeTableLength()];
@@ -552,19 +558,19 @@ public class AttributeLogic {
 			while (i < lvttai.getLocalVariableTypeTableLength()) {
 				LocalVariableTypeTable localVariableTypeTable = new LocalVariableTypeTable();
 				localVariableTypeTable.setStartPc(byteBuffer.getShort());
-				System.out.println("\t\t\t\tStartPc : "
+				logger.debug("\t\t\t\tStartPc : "
 						+ localVariableTypeTable.getStartPc());
 				localVariableTypeTable.setLength(byteBuffer.getShort());
-				System.out.println("\t\t\t\tLength : "
+				logger.debug("\t\t\t\tLength : "
 						+ localVariableTypeTable.getLength());
 				localVariableTypeTable.setNameIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tNameIndex : "
+				logger.debug("\t\t\t\tNameIndex : "
 						+ localVariableTypeTable.getNameIndex());
 				localVariableTypeTable.setSignatureIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tSignatureIndex : "
+				logger.debug("\t\t\t\tSignatureIndex : "
 						+ localVariableTypeTable.getSignatureIndex());
 				localVariableTypeTable.setIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\tIndex : "
+				logger.debug("\t\t\t\tIndex : "
 						+ localVariableTypeTable.getIndex());
 				localVariableTypeTables[i] = localVariableTypeTable;
 				i++;
@@ -586,11 +592,11 @@ public class AttributeLogic {
 		
 		RuntimeVisibleAnnotationsAttributeInfo rvaai = new RuntimeVisibleAnnotationsAttributeInfo();
 		rvaai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "+ rvaai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : "+ rvaai.getAttributeNameIndex());
 		rvaai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "+ rvaai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : "+ rvaai.getAttributeLength());
 		rvaai.setNumAnnotations(byteBuffer.getShort());
-		System.out.println("\t\t\tNumAnnotations : "+ rvaai.getNumAnnotations());
+		logger.debug("\t\t\tNumAnnotations : "+ rvaai.getNumAnnotations());
 		
 		if (rvaai.getNumAnnotations() > 0) {
 			Annotation[] annotations = new Annotation[rvaai.getNumAnnotations()];
@@ -609,16 +615,16 @@ public class AttributeLogic {
 	private Annotation convertToAnnotation(ByteBuffer byteBuffer) {
 		Annotation annotation = new Annotation();
 		annotation.setTypeIndex(byteBuffer.getShort());
-		System.out.println("\t\t\t\tTypeIndex : "+ annotation.getTypeIndex());
+		logger.debug("\t\t\t\tTypeIndex : "+ annotation.getTypeIndex());
 		annotation.setNumElementValuePairs(byteBuffer.getShort());
-		System.out.println("\t\t\t\tNumElementValuePairs : "+ annotation.getNumElementValuePairs());
+		logger.debug("\t\t\t\tNumElementValuePairs : "+ annotation.getNumElementValuePairs());
 		if (annotation.getNumElementValuePairs() > 0) {
 			ElementValuePair[] elementValuePairs = new ElementValuePair[annotation.getNumElementValuePairs()];
 			int i = 0;
 			while (i < annotation.getNumElementValuePairs()){
 				ElementValuePair elementValuePair = new ElementValuePair();
 				elementValuePair.setElementNameIndex(byteBuffer.getShort());
-				System.out.println("\t\t\t\t\tElementNameIndex[" + i + "] : "+ elementValuePair.getElementNameIndex());
+				logger.debug("\t\t\t\t\tElementNameIndex[" + i + "] : "+ elementValuePair.getElementNameIndex());
 				ElementValue elementValue = convertToElementValue(byteBuffer);
 				elementValuePair.setElementNameValue(elementValue);
 				elementValuePairs[i] = elementValuePair;
@@ -633,7 +639,7 @@ public class AttributeLogic {
 		byte[] tagByte = {byteBuffer.get()};
 		String tag = new String(tagByte);
 //		elementValuePair.setElementNameValue(byteBuffer.getShort());
-		System.out.println("\t\t\t\t\tElementNameValue.tag : "+ tag);
+		logger.debug("\t\t\t\t\tElementNameValue.tag : "+ tag);
 		ElementValue elementValue = null;
 		if (constValueIndex.contains(tag)) {
 			ConstValue constValue = new ConstValue();
@@ -679,11 +685,11 @@ public class AttributeLogic {
 	private RuntimeInvisibleAnnotationsAttributeInfo convertToRuntimeInvisibleAnnotations(ByteBuffer byteBuffer,int attributeNameIndex,int attributeLength) {
 		RuntimeInvisibleAnnotationsAttributeInfo riaai = new RuntimeInvisibleAnnotationsAttributeInfo();
 		riaai.setAttributeNameIndex(attributeNameIndex);
-		System.out.println("\t\t\tAttributeNameIndex : "+ riaai.getAttributeNameIndex());
+		logger.debug("\t\t\tAttributeNameIndex : "+ riaai.getAttributeNameIndex());
 		riaai.setAttributeLength(attributeLength);
-		System.out.println("\t\t\tAttributeLength : "+ riaai.getAttributeLength());
+		logger.debug("\t\t\tAttributeLength : "+ riaai.getAttributeLength());
 		riaai.setNumAnnotations(byteBuffer.getShort());
-		System.out.println("\t\t\tNumAnnotations : "+ riaai.getNumAnnotations());
+		logger.debug("\t\t\tNumAnnotations : "+ riaai.getNumAnnotations());
 		
 		if (riaai.getNumAnnotations() > 0) {
 			Annotation[] annotations = new Annotation[riaai.getNumAnnotations()];
