@@ -5,8 +5,8 @@ import java.util.List;
 public class MethodRelationInfoBean {
 
 	private String methodName;
-	// 呼び出し先メソッド名のリスト
-	private List<String> callMethodNames;
+	// 呼び出し先のリスト
+	private List<String> callTargetNames;
 	// 呼び出し先メソッドのリスト
 	private List<MethodRelationInfoBean> callMethods;
 	// 呼び出し元メソッドのリスト
@@ -14,12 +14,12 @@ public class MethodRelationInfoBean {
 	// 呼び出し元メソッドのリスト
 	private List<MethodRelationInfoBean> invokers;
 
-	
-	public List<String> getCallMethodNames() {
-		return callMethodNames;
+
+	public List<String> getCallTargets() {
+		return callTargetNames;
 	}
-	public void setCallMethodNames(List<String> callMethodNames) {
-		this.callMethodNames = callMethodNames;
+	public void setCallTargets(List<String> callTargetNames) {
+		this.callTargetNames = callTargetNames;
 	}
 	public List<MethodRelationInfoBean> getInvokerNames() {
 		return invokerNames;

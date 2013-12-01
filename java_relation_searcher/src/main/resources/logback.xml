@@ -5,7 +5,10 @@
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>/usr/local/app/logs/java_relation_searcher.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<FileNamePattern>/usr/local/app/logs/java_relation_searcher.%d{yyyy-MM-dd}.log</FileNamePattern>
+<!--
+		<FileNamePattern>/usr/local/app/logs/java_relation_searcher.%d{yyyy-MM-dd}.log</FileNamePattern>
+ -->
+	 		<FileNamePattern>C:\Users\Yucci\temp\java_relation_searcher.%d{yyyy-MM-dd}.log</FileNamePattern>
 			<MaxHistory>7</MaxHistory>
 		</rollingPolicy>
 		<encoder>

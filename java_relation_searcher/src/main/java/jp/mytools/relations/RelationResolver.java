@@ -3,24 +3,24 @@ package jp.mytools.relations;
 import java.io.File;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
 import jp.mytools.disassemble.service.DisassembleService;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.service.RelationResolveService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class RelationResolver {
 
-	protected static Logger logger = LoggerFactory.getLogger(RelationResolver.class ); 
-	
+	protected static Logger logger = LoggerFactory.getLogger(RelationResolver.class );
+
 	public static void main(String[] args) {
-		DisassembleService disassembler = new DisassembleService(); 
+		DisassembleService disassembler = new DisassembleService();
 		RelationResolveService relationResolveService = new RelationResolveService();
 		try {
-			List<ClassFileInfo> disassembleResults = disassembler.readFolder(new File("/Users/kawata_yusuke/Documents/workspace/ameba_pr_admin/build/classes"));
+			List<ClassFileInfo> disassembleResults = disassembler.readFolder(new File("C:\\Users\\Yucci\\Desktop\\pleiades\\workspace\\test_project\\bin"));
 			List<ClassRelationInfoBean> relationResolveResults = relationResolveService.resolve(disassembleResults);
 			for (ClassRelationInfoBean result : relationResolveResults) {
 				logger.info("----------------------------------------");
@@ -31,7 +31,7 @@ public class RelationResolver {
 						logger.info("InterfaceName = " + interfaceName);
 					}
 				}
-				
+
 				if (result.getMethods() != null) {
 					for (MethodRelationInfoBean method : result.getMethods()) {
 						logger.info("MethodName = " + method.getMethodName());
@@ -44,5 +44,5 @@ public class RelationResolver {
 		}
 	}
 
-	
+
 }
