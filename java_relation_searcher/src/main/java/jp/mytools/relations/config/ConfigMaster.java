@@ -15,8 +15,4 @@ public class ConfigMaster {
 		return targetPackage;
 	}
 
-	public static void setTargetPackage(String targetPackage) {
-		ConfigMaster.targetPackage = targetPackage;
-	}
-
 }
