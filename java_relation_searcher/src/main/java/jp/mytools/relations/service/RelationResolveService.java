@@ -1,12 +1,16 @@
 package jp.mytools.relations.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import jp.mytools.disassemble.CallMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jp.mytools.disassemble.attributes.beans.Attribute;
 import jp.mytools.disassemble.attributes.beans.CodeAttributeInfo;
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
@@ -24,18 +28,78 @@ import jp.mytools.disassemble.opcode.beans.ReferenceOpecode;
 import jp.mytools.disassemble.opcode.enums.OpcodeType;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
+import jp.mytools.relations.config.ConfigMaster;
 
 public class RelationResolveService {
+	
+	private static final Logger logger = LoggerFactory.getLogger(RelationResolveService.class);
 
-	public List<ClassRelationInfoBean> resolve(List<ClassFileInfo> classFileInfoList) {
+	public Map<String, ClassRelationInfoBean> resolve(List<ClassFileInfo> classFileInfoList) throws Exception {
 
-		List<ClassRelationInfoBean> results = new ArrayList<>();
-
+		Map<String, ClassRelationInfoBean> result = new HashMap<String, ClassRelationInfoBean>();
+		
+		// 全て関連付け用の型にコンバートする
 		for (ClassFileInfo classFileInfo : classFileInfoList) {
-			results.add(convert(classFileInfo));
+			ClassRelationInfoBean classRelationInfoBean = convert(classFileInfo);
+			result.put(classRelationInfoBean.getClassName(), classRelationInfoBean);
 		}
+		
+		// 呼び出し先と呼び出され元を解決する
+		for (Entry<String, ClassRelationInfoBean> entry : result.entrySet()) {
+			ClassRelationInfoBean target = entry.getValue();
+			if (target.getMethods() == null) {
+				logger.info("[No methods] " + target.getClassName());
+				continue;
+			}
+			
+			for (MethodRelationInfoBean invokerMethod : target.getMethods()) {
+				boolean isMatch = false;
+				Set<String> callMethodNames = invokerMethod.getCallTargetNames();
+				for (String callMethodName : callMethodNames) {
+					String[] classNameAndMethodName = callMethodName.split("#");
+					if (classNameAndMethodName.length != 2) {
+						throw new Exception("[Illegal callMethodName] callMethodName = " + callMethodName);
+					}
+					ClassRelationInfoBean callClassInfo = result.get(classNameAndMethodName[0]);
+					
+					if (callClassInfo == null) {
+						logger.warn("[Not found callClassInfo] " + classNameAndMethodName[0]);
+						continue;
+					}
+					for (MethodRelationInfoBean callMethodInfo : callClassInfo.getMethods()) {
+						String[] callClassMethodName = callMethodInfo.getMethodName().split("#");
+	
+						if (callClassMethodName.length != 2) {
+							throw new Exception("[Illegal callMethodName] callMethodName = " + callMethodName);
+						}
 
-		return results;
+						if (callClassMethodName[1].equals(classNameAndMethodName[1])) {
+							if (callMethodInfo.getInvokers() == null) {
+								callMethodInfo.setInvokers(new ArrayList<MethodRelationInfoBean>());
+							}
+							// 呼び出されてるリストに追加
+							callMethodInfo.getInvokers().add(invokerMethod);
+							
+							if (invokerMethod.getCallMethods() == null) {
+								invokerMethod.setCallMethods(new ArrayList<MethodRelationInfoBean>());
+							}
+							// 呼び出してる先リストに追加
+							invokerMethod.getCallMethods().add(callMethodInfo);
+
+							isMatch = true;
+							break;
+						}
+					}
+					
+					if (isMatch == false) {
+						logger.warn("[Not found] invokerMethod = " + invokerMethod.getMethodName());
+					}
+				}
+			}
+		}
+		
+		
+		return result;
 	}
 
 
@@ -68,9 +132,9 @@ public class RelationResolveService {
 			// クラスの持つメソッド情報
 			for (MethodInfo methodInfo : methodInfoList) {
 				MethodRelationInfoBean methodRelationInfoBean = new MethodRelationInfoBean();
-				methodRelationInfoBean.setCallTargets(new ArrayList<String>());
+				methodRelationInfoBean.setCallTargetNames(new HashSet<String>());
 				String methodName = ((Utf8ConstantPool) cpMap.get(methodInfo.getNameIndex())).getValue() + ((Utf8ConstantPool) cpMap.get(methodInfo.getDescriptorIndex())).getValue();
-				methodRelationInfoBean.setMethodName(methodName);
+				methodRelationInfoBean.setMethodName(className + "#" + methodName);
 				// メソッドが呼び出しているメソッドを抽出
 				if (methodInfo.getAttributes() != null) {
 
@@ -80,6 +144,11 @@ public class RelationResolveService {
 
 						CodeAttributeInfo code = (CodeAttributeInfo) attribute;
 						for (Opcode opCode : code.getOpcodes()) {
+
+							String callClassName = null;
+							String callMethodName = null;
+							String callMethodDescriptorName = null;
+							
 							// staicフィールドまたはメソッドの呼び出しの場合
 							if (opCode.getOpcodeType() == OpcodeType.GETSTATIC) {
 								ReferenceOpecode referenceOpecode = (ReferenceOpecode) opCode;
@@ -87,27 +156,20 @@ public class RelationResolveService {
 									// フィールド
 									FieldrefConstantPool fieldrefCp = (FieldrefConstantPool) cpMap.get(referenceOpecode.getIndex());
 									ClassConstantPool callClassCp = (ClassConstantPool) cpMap.get(fieldrefCp.getClassIndex());
-									String callClassName = ((Utf8ConstantPool) cpMap.get(callClassCp.getNameIndex())).getValue();
+									callClassName = ((Utf8ConstantPool) cpMap.get(callClassCp.getNameIndex())).getValue();
 									NameAndTypeConstantPool calledMethodNameAndTypeCp = (NameAndTypeConstantPool) cpMap.get(fieldrefCp.getNameAndTypeIndex());
-									String callMethodName = ((Utf8ConstantPool) cpMap.get(calledMethodNameAndTypeCp.getNameIndex())).getValue();
-									String callMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(calledMethodNameAndTypeCp.getDescriptorIndex())).getValue();
-									methodRelationInfoBean.getCallTargets().add(callClassName + "#" + callMethodName + callMethodDescriptorName);
-									continue;
+									callMethodName = ((Utf8ConstantPool) cpMap.get(calledMethodNameAndTypeCp.getNameIndex())).getValue();
+									callMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(calledMethodNameAndTypeCp.getDescriptorIndex())).getValue();
 								} else {
 									// メソッド
 									MethodrefConstantPool methodrefCp = (MethodrefConstantPool) cpMap.get(referenceOpecode.getIndex());
 									ClassConstantPool callClassCp = (ClassConstantPool) cpMap.get(methodrefCp.getClassIndex());
-									String callClassName = ((Utf8ConstantPool) cpMap.get(callClassCp.getNameIndex())).getValue();
+									callClassName = ((Utf8ConstantPool) cpMap.get(callClassCp.getNameIndex())).getValue();
 									NameAndTypeConstantPool callMethodNameAndTypeCp = (NameAndTypeConstantPool) cpMap.get(methodrefCp.getNameAndTypeIndex());
-									String callMethodName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getNameIndex())).getValue();
-									String callMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getDescriptorIndex())).getValue();
-									methodRelationInfoBean.getCallTargets().add(callClassName + "#" + callMethodName + callMethodDescriptorName);
-									continue;
+									callMethodName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getNameIndex())).getValue();
+									callMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getDescriptorIndex())).getValue();
 								}
-							}
-							
-							
-							if (opCode.getOpcodeType() == OpcodeType.INVOKEVIRTUAL || opCode.getOpcodeType() == OpcodeType.INVOKEINTERFACE || opCode.getOpcodeType() == OpcodeType.INVOKESPECIAL || opCode.getOpcodeType() == OpcodeType.INVOKESTATIC) {
+							} else if (opCode.getOpcodeType() == OpcodeType.INVOKEVIRTUAL || opCode.getOpcodeType() == OpcodeType.INVOKEINTERFACE || opCode.getOpcodeType() == OpcodeType.INVOKESPECIAL || opCode.getOpcodeType() == OpcodeType.INVOKESTATIC) {
 								ClassConstantPool callClassCp = null;
 								int nameAndTypeIndex = 0;
 								if (opCode.getOpcodeType() == OpcodeType.INVOKEINTERFACE) {
@@ -124,36 +186,21 @@ public class RelationResolveService {
 									nameAndTypeIndex = methodrefCp.getNameAndTypeIndex();
 								}
 
-								String callClassName = ((Utf8ConstantPool) cpMap.get(callClassCp.getNameIndex())).getValue();
-								if (callClassName.startsWith(targetPackage) == false) {
-									System.out.println("[ignore] out of package. calledClassName = " + calledClassName);
-									continue;
-								}
-								callMethod.setClassName(calledClassName);
+								callClassName = ((Utf8ConstantPool) cpMap.get(callClassCp.getNameIndex())).getValue();
 								// 呼び出し先のメソッド
-								NameAndTypeConstantPool calledMethodNameAndTypeCp = (NameAndTypeConstantPool) cpMap.get(nameAndTypeIndex);
-								String calledMethodName = ((Utf8ConstantPool) cpMap.get(calledMethodNameAndTypeCp.getNameIndex())).getValue();
-								callMethod.setMethodName(calledMethodName);
-								String calledMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(calledMethodNameAndTypeCp.getDescriptorIndex())).getValue();
-								callMethod.setMethodDescriptor(calledMethodDescriptorName);
-
-								Set<CallMethod> callMethods = methodMap.get(targetMethod.getFullMethodName());
-								if (callMethods == null) {
-									callMethods = new HashSet<>();
-								}
-
-								callMethods.add(callMethod);
-								methodMap.put(targetMethod.getFullMethodName(), callMethods);
-
-								// 呼び出され元のmapにも追加
-								Set<CallMethod> calledMethods = calledMethodMap.get(callMethod.getFullMethodName());
-								if (calledMethods == null) {
-									calledMethods = new HashSet<>();
-								}
-								calledMethods.add(targetMethod);
-								calledMethodMap.put(callMethod.getFullMethodName(), calledMethods);
+								NameAndTypeConstantPool callMethodNameAndTypeCp = (NameAndTypeConstantPool) cpMap.get(nameAndTypeIndex);
+								callMethodName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getNameIndex())).getValue();
+								callMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getDescriptorIndex())).getValue();
+							} else {
+								continue;
 							}
 							
+							// 精査対象外のパッケージは無視
+							if (callClassName.startsWith(ConfigMaster.getTargetPackage()) == false) {
+								logger.debug("[ignore] out of package. callClassName = " + callClassName);
+								continue;
+							}
+							methodRelationInfoBean.getCallTargetNames().add(callClassName + "#" + callMethodName + callMethodDescriptorName);
 						}
 					}
 				}

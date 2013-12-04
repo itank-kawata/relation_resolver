@@ -1,12 +1,13 @@
 package jp.mytools.relations.beans;
 
 import java.util.List;
+import java.util.Set;
 
 public class MethodRelationInfoBean {
 
 	private String methodName;
 	// 呼び出し先のリスト
-	private List<String> callTargetNames;
+	private Set<String> callTargetNames;
 	// 呼び出し先メソッドのリスト
 	private List<MethodRelationInfoBean> callMethods;
 	// 呼び出し元メソッドのリスト
@@ -15,10 +16,10 @@ public class MethodRelationInfoBean {
 	private List<MethodRelationInfoBean> invokers;
 
 
-	public List<String> getCallTargets() {
+	public Set<String> getCallTargetNames() {
 		return callTargetNames;
 	}
-	public void setCallTargets(List<String> callTargetNames) {
+	public void setCallTargetNames(Set<String> callTargetNames) {
 		this.callTargetNames = callTargetNames;
 	}
 	public List<MethodRelationInfoBean> getInvokerNames() {
