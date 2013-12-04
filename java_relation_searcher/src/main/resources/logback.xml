@@ -5,15 +5,30 @@
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>/usr/local/app/logs/java_relation_searcher.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-<!--
-		<FileNamePattern>/usr/local/app/logs/java_relation_searcher.%d{yyyy-MM-dd}.log</FileNamePattern>
- -->
-	 		<FileNamePattern>C:\Users\Yucci\temp\java_relation_searcher.%d{yyyy-MM-dd}.log</FileNamePattern>
+			<!-- -->
+			<FileNamePattern>/usr/local/app/logs/java_relation_searcher.%d{yyyy-MM-dd}.log
+			</FileNamePattern>
 			<MaxHistory>7</MaxHistory>
 		</rollingPolicy>
 		<encoder>
 			<charset>UTF-8</charset>
-			<Pattern>[%-5level][%d{yyyy-MM-dd HH:mm:ss.SSS}] %class - %msg%n</Pattern>
+			<Pattern>[%-5level][%d{yyyy-MM-dd HH:mm:ss.SSS}] %class - %msg%n
+			</Pattern>
+		</encoder>
+	</appender>
+
+	<!-- logをファイルに出力 -->
+	<appender name="RESULT_FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>/usr/local/app/logs/java_relation_searcher/result.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/usr/local/app/logs/java_relation_searcher/result.%d{yyyy-MM-dd_HH-mm}.log
+			</fileNamePattern>
+			<MaxHistory>7</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<charset>UTF-8</charset>
+			<Pattern>%msg%n</Pattern>
 		</encoder>
 	</appender>
 
@@ -24,6 +39,10 @@
 			<Pattern>[%-5level] %class - %msg%n</Pattern>
 		</encoder>
 	</appender>
+
+	<logger name="RESULT" level="INFO">
+		<appender-ref ref="RESULT_FILE" />
+	</logger>
 
 	<!-- ログ出力に関する設定 -->
 	<root>
