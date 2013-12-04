@@ -42,7 +42,7 @@ public class RelationResolver {
 						resultLogger.info("MethodName = " + method.getMethodName());
 						if (method.getCallMethods() != null) {
 							for (MethodRelationInfoBean callMethod : method.getCallMethods()) {
-								resultLogger.info("\tCaller : " + callMethod.getMethodName() );
+								resultLogger.info("\tCall : " + callMethod.getMethodName() );
 							}
 						}
 						
@@ -53,41 +53,12 @@ public class RelationResolver {
 							}
 						}
 						
-						// インターフェースでの呼び出しを探す
-						if (result.getValue().getInterfaceNameList() != null) {
-							for (String interfaceName : result.getValue().getInterfaceNameList()) {
-								
-								//インターフェース
-								ClassRelationInfoBean interfaceInfo = relationResolveResults.get(interfaceName);
-								if (interfaceInfo == null) {
-									logger.warn("[Not found Interface] " + interfaceName);
-									continue;
-								}
-
-								if (interfaceInfo.getMethods() != null) {
-									for (MethodRelationInfoBean interfaceMethod : interfaceInfo.getMethods()) {
-
-										String[] interfaceClassMethodName = interfaceMethod.getMethodName().split("#");
-										if (interfaceClassMethodName.length != 2) {
-											throw new Exception("Illegal methodName : " + interfaceMethod.getMethodName());
-										}
-										
-										String[] classAndMethodName = method.getMethodName().split("#");
-										if (classAndMethodName.length != 2) {
-											throw new Exception("Illegal methodName : " + method.getMethodName());
-										}
-										
-										if (interfaceClassMethodName[1].equals(classAndMethodName[1])) {
-											if (interfaceMethod.getInvokers() != null) {
-												for (MethodRelationInfoBean interfaceInvoker : interfaceMethod.getInvokers()) {
-													resultLogger.info("\tInvoker : " + interfaceInvoker.getMethodName() + " << interfaceCall(" + interfaceName + ")" );
-												}
-											}
-										}
-									}
-								}
+						// インターフェースでの呼び出し
+						if (method.getInterfaceInvokers() != null) {
+							for (MethodRelationInfoBean interfaceInvoker : method.getInterfaceInvokers()) {
+								resultLogger.info("\tInterfaceInvoker : " + interfaceInvoker.getMethodName() );
 							}
-						}						
+						}
 					}
 				}
 			}

@@ -14,7 +14,8 @@ public class MethodRelationInfoBean {
 	private List<MethodRelationInfoBean> invokerNames;
 	// 呼び出し元メソッドのリスト
 	private List<MethodRelationInfoBean> invokers;
-
+	// インターフェースによる呼び出し元メソッドのリスト
+	private List<MethodRelationInfoBean> interfaceInvokers;
 
 	public Set<String> getCallTargetNames() {
 		return callTargetNames;
@@ -45,6 +46,12 @@ public class MethodRelationInfoBean {
 	}
 	public void setInvokers(List<MethodRelationInfoBean> invokers) {
 		this.invokers = invokers;
+	}
+	public List<MethodRelationInfoBean> getInterfaceInvokers() {
+		return interfaceInvokers;
+	}
+	public void setInterfaceInvokers(List<MethodRelationInfoBean> interfaceInvokers) {
+		this.interfaceInvokers = interfaceInvokers;
 	}
 
 }

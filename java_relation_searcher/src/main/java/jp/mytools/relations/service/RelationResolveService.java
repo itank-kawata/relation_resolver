@@ -98,7 +98,52 @@ public class RelationResolveService {
 			}
 		}
 		
+		// インターフェースでの呼び出しを解決する
+		for (Entry<String, ClassRelationInfoBean> entry : result.entrySet()) {
+			
+			for (MethodRelationInfoBean method : entry.getValue().getMethods()) {
+				// インターフェースでの呼び出しを探す
+				if (entry.getValue().getInterfaceNameList() != null) {
+					for (String interfaceName : entry.getValue().getInterfaceNameList()) {
+						
+						//インターフェース
+						ClassRelationInfoBean interfaceInfo = result.get(interfaceName);
+						if (interfaceInfo == null) {
+							logger.warn("[Not found Interface] " + interfaceName);
+							continue;
+						}
+
+						if (interfaceInfo.getMethods() != null) {
+							for (MethodRelationInfoBean interfaceMethod : interfaceInfo.getMethods()) {
+
+								String[] interfaceClassMethodName = interfaceMethod.getMethodName().split("#");
+								if (interfaceClassMethodName.length != 2) {
+									throw new Exception("Illegal methodName : " + interfaceMethod.getMethodName());
+								}
+								
+								String[] classAndMethodName = method.getMethodName().split("#");
+								if (classAndMethodName.length != 2) {
+									throw new Exception("Illegal methodName : " + method.getMethodName());
+								}
+								
+								if (interfaceClassMethodName[1].equals(classAndMethodName[1])) {
+									if (interfaceMethod.getInvokers() != null) {
+										for (MethodRelationInfoBean interfaceInvoker : interfaceMethod.getInvokers()) {
+											if (method.getInterfaceInvokers() == null) {
+												method.setInterfaceInvokers(new ArrayList<MethodRelationInfoBean>());
+											}
+											
+											method.getInterfaceInvokers().add(interfaceInvoker);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		
+		}
 		return result;
 	}
 
