@@ -101,6 +101,11 @@ public class RelationResolveService {
 		// インターフェースでの呼び出しを解決する
 		for (Entry<String, ClassRelationInfoBean> entry : result.entrySet()) {
 			
+			if (entry.getValue().getMethods() == null) {
+				logger.info("[No methods] " + entry.getValue().getClassName());
+				continue;
+			}
+			
 			for (MethodRelationInfoBean method : entry.getValue().getMethods()) {
 				// インターフェースでの呼び出しを探す
 				if (entry.getValue().getInterfaceNameList() != null) {
