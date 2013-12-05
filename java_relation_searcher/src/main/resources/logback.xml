@@ -3,11 +3,10 @@
 	<!-- logをファイルに出力 -->
 	<appender name="FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>/usr/local/app/logs/java_relation_searcher.log</File>
+		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/app.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- -->
-			<FileNamePattern>/usr/local/app/logs/java_relation_searcher.%d{yyyy-MM-dd}.log
-			</FileNamePattern>
+			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<MaxHistory>7</MaxHistory>
 		</rollingPolicy>
 		<encoder>
@@ -17,12 +16,42 @@
 		</encoder>
 	</appender>
 
-	<!-- logをファイルに出力 -->
+	<!-- logにファイル依存関係結果を出力 -->
 	<appender name="RESULT_FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>/usr/local/app/logs/java_relation_searcher/result.log</File>
+		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/result.log</File>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>/usr/local/app/logs/java_relation_searcher/result.%d{yyyy-MM-dd_HH-mm}.log
+			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/result.%d{yyyy-MM-dd_HH-mm}.log
+			</fileNamePattern>
+			<MaxHistory>7</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<charset>UTF-8</charset>
+			<Pattern>%msg%n</Pattern>
+		</encoder>
+	</appender>
+
+	<!-- logにファイルに呼び出しのないメソッド情報を出力 -->
+	<appender name="NO_INVOKER_METHOD_FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/no_invokers.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/no_invokers.%d{yyyy-MM-dd_HH-mm}.log
+			</fileNamePattern>
+			<MaxHistory>7</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<charset>UTF-8</charset>
+			<Pattern>%msg%n</Pattern>
+		</encoder>
+	</appender>
+
+	<!-- logにファイルに呼び出しのないクラス情報を出力 -->
+	<appender name="NO_INVOKER_CLASS_FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/no_invokers_class.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/no_invokers_class.%d{yyyy-MM-dd_HH-mm}.log
 			</fileNamePattern>
 			<MaxHistory>7</MaxHistory>
 		</rollingPolicy>
@@ -42,6 +71,14 @@
 
 	<logger name="RESULT" level="INFO">
 		<appender-ref ref="RESULT_FILE" />
+	</logger>
+
+	<logger name="NO_INVOKER" level="INFO">
+		<appender-ref ref="NO_INVOKER_METHOD_FILE" />
+	</logger>
+
+	<logger name="NO_INVOKER_CLASS" level="INFO">
+		<appender-ref ref="NO_INVOKER_CLASS_FILE" />
 	</logger>
 
 	<!-- ログ出力に関する設定 -->

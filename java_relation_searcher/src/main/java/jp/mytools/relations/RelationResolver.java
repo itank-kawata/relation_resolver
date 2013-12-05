@@ -20,6 +20,8 @@ public class RelationResolver {
 	protected static Logger logger = LoggerFactory.getLogger(RelationResolver.class );
 
 	private static Logger resultLogger = LoggerFactory.getLogger("RESULT");
+	private static Logger noInvokerLogger = LoggerFactory.getLogger("NO_INVOKER");
+	private static Logger noInvokerClassLogger = LoggerFactory.getLogger("NO_INVOKER_CLASS");
 	
 	public static void main(String[] args) {
 		DisassembleService disassembler = new DisassembleService();
@@ -28,6 +30,10 @@ public class RelationResolver {
 			List<ClassFileInfo> disassembleResults = disassembler.readFolder(new File(ConfigMaster.getTargetApplicationDir()));
 			Map<String ,ClassRelationInfoBean> relationResolveResults = relationResolveService.resolve(disassembleResults);
 			for (Entry<String, ClassRelationInfoBean> result : relationResolveResults.entrySet()) {
+//				// TODO for DEBUG
+//				if (result.getValue().getClassName().indexOf("DaoImp") < 0) {
+//					continue;
+//				}
 				resultLogger.info("----------------------------------------");
 				resultLogger.info("ClassName = " + result.getValue().getClassName());
 				resultLogger.info("SuperClassName = " + result.getValue().getSuperClassName());
@@ -36,7 +42,9 @@ public class RelationResolver {
 						resultLogger.info("InterfaceName = " + interfaceName);
 					}
 				}
-
+				
+				// TODO フィールドの使用有無の解決がまだ未実装だから、フィールドが使われてたら誤検知する
+				boolean isUsedClass = false;
 				if (result.getValue().getMethods() != null) {
 					for (MethodRelationInfoBean method : result.getValue().getMethods()) {
 						resultLogger.info("MethodName = " + method.getMethodName());
@@ -49,6 +57,7 @@ public class RelationResolver {
 						// インターフェースでの呼び出し以外
 						if (method.getInvokers() != null) {
 							for (MethodRelationInfoBean invoker : method.getInvokers()) {
+								isUsedClass = true;
 								resultLogger.info("\tInvoker : " + invoker.getMethodName() );
 							}
 						}
@@ -56,10 +65,20 @@ public class RelationResolver {
 						// インターフェースでの呼び出し
 						if (method.getInterfaceInvokers() != null) {
 							for (MethodRelationInfoBean interfaceInvoker : method.getInterfaceInvokers()) {
+								isUsedClass = true;
 								resultLogger.info("\tInterfaceInvoker : " + interfaceInvoker.getMethodName() );
 							}
 						}
+						
+						// どこからも呼び出されてなメソッドをログに記録
+						if (method.getInvokers() == null && method.getInterfaceInvokers() == null) {
+							noInvokerLogger.info(method.getMethodName());
+						}
 					}
+				}
+				
+				if (isUsedClass == false) {
+					noInvokerClassLogger.info(result.getValue().getClassName());
 				}
 			}
 		} catch (Exception e) {
