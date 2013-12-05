@@ -29,23 +29,42 @@ import jp.mytools.disassemble.opcode.enums.OpcodeType;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.config.ConfigMaster;
+import jp.mytools.relations.dto.RelationResolverServiceResultDto;
 
 public class RelationResolveService {
 	
 	private static final Logger logger = LoggerFactory.getLogger(RelationResolveService.class);
 
-	public Map<String, ClassRelationInfoBean> resolve(List<ClassFileInfo> classFileInfoList) throws Exception {
-
-		Map<String, ClassRelationInfoBean> result = new HashMap<String, ClassRelationInfoBean>();
-		
+	public RelationResolverServiceResultDto resolve(List<ClassFileInfo> classFileInfoList) throws Exception {
+		RelationResolverServiceResultDto result = new RelationResolverServiceResultDto();
+		Map<String, ClassRelationInfoBean> packageClassMap = new HashMap<String, ClassRelationInfoBean>();
+		Map<String,Set<String>> interfaceMap = new HashMap<>();
 		// 全て関連付け用の型にコンバートする
 		for (ClassFileInfo classFileInfo : classFileInfoList) {
 			ClassRelationInfoBean classRelationInfoBean = convert(classFileInfo);
-			result.put(classRelationInfoBean.getClassName(), classRelationInfoBean);
+			packageClassMap.put(classRelationInfoBean.getClassName(), classRelationInfoBean);
+			
+			// インターフェースと実装クラスのマッピングを作成する
+			if (classRelationInfoBean.getInterfaceNameList() != null) {
+				for (String interfaceName : classRelationInfoBean.getInterfaceNameList()) {
+					if (interfaceName.indexOf(ConfigMaster.getTargetPackage()) < 0) {
+						continue;
+					}
+					
+					Set<String> implClassSet = interfaceMap.get(interfaceName);
+					if (implClassSet == null) {
+						implClassSet = new HashSet<>();
+					}
+					
+					implClassSet.add(classRelationInfoBean.getClassName());
+					interfaceMap.put(interfaceName, implClassSet);
+				}
+			}
 		}
+		result.setInterfaceImpMap(interfaceMap);
 		
 		// 呼び出し先と呼び出され元を解決する
-		for (Entry<String, ClassRelationInfoBean> entry : result.entrySet()) {
+		for (Entry<String, ClassRelationInfoBean> entry : packageClassMap.entrySet()) {
 			ClassRelationInfoBean target = entry.getValue();
 			if (target.getMethods() == null) {
 				logger.info("[No methods] " + target.getClassName());
@@ -60,7 +79,7 @@ public class RelationResolveService {
 					if (classNameAndMethodName.length != 2) {
 						throw new Exception("[Illegal callMethodName] callMethodName = " + callMethodName);
 					}
-					ClassRelationInfoBean callClassInfo = result.get(classNameAndMethodName[0]);
+					ClassRelationInfoBean callClassInfo = packageClassMap.get(classNameAndMethodName[0]);
 					
 					if (callClassInfo == null) {
 						logger.warn("[Not found callClassInfo] " + classNameAndMethodName[0]);
@@ -99,7 +118,7 @@ public class RelationResolveService {
 		}
 		
 		// インターフェースでの呼び出しを解決する
-		for (Entry<String, ClassRelationInfoBean> entry : result.entrySet()) {
+		for (Entry<String, ClassRelationInfoBean> entry : packageClassMap.entrySet()) {
 			
 			if (entry.getValue().getMethods() == null) {
 				logger.info("[No methods] " + entry.getValue().getClassName());
@@ -112,7 +131,7 @@ public class RelationResolveService {
 					for (String interfaceName : entry.getValue().getInterfaceNameList()) {
 						
 						//インターフェース
-						ClassRelationInfoBean interfaceInfo = result.get(interfaceName);
+						ClassRelationInfoBean interfaceInfo = packageClassMap.get(interfaceName);
 						if (interfaceInfo == null) {
 							logger.warn("[Not found Interface] " + interfaceName);
 							continue;
@@ -149,6 +168,8 @@ public class RelationResolveService {
 			}
 		
 		}
+		
+		result.setPackageClassMap(packageClassMap);
 		return result;
 	}
 

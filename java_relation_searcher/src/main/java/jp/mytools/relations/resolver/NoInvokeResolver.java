@@ -31,7 +31,7 @@ public class NoInvokeResolver implements RelationResolver {
 		RelationResolveService relationResolveService = new RelationResolveService();
 		try {
 			List<ClassFileInfo> disassembleResults = disassembler.readFolder(new File(ConfigMaster.getTargetApplicationDir()));
-			Map<String ,ClassRelationInfoBean> relationResolveResults = relationResolveService.resolve(disassembleResults);
+			Map<String ,ClassRelationInfoBean> relationResolveResults = relationResolveService.resolve(disassembleResults).getPackageClassMap();
 			for (Entry<String, ClassRelationInfoBean> result : relationResolveResults.entrySet()) {
 //				// TODO for DEBUG
 //				if (result.getValue().getClassName().indexOf("DaoImp") < 0) {

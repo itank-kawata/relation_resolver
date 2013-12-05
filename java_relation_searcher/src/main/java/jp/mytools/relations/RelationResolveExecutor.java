@@ -12,6 +12,7 @@ public class RelationResolveExecutor {
 
 	public static void main(String[] args) {
 		try {
+			logger.info("[RESOLVER] " + ConfigMaster.getResolverClass());
 			RelationResolver resolver = (RelationResolver) Class.forName(ConfigMaster.getResolverClass()).newInstance();
 			resolver.resolve();
 		} catch (Throwable t) {
