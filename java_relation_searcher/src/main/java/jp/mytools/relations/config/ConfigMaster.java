@@ -8,6 +8,7 @@ public class ConfigMaster {
 		ResourceBundle rb = ResourceBundle.getBundle("config");
 		targetPackage = rb.getString("targetPackage");
 		targetApplicationDir = rb.getString("targetApplicationDir");
+		resolverClass = rb.getString("resolverClass");
 	}
 
 	private static String targetPackage;
@@ -18,6 +19,11 @@ public class ConfigMaster {
 	private static String targetApplicationDir;
 	public static String getTargetApplicationDir() {
 		return targetApplicationDir;
+	}
+
+	private static String resolverClass;
+	public static String getResolverClass() {
+		return resolverClass;
 	}
 
 	

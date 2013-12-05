@@ -1,9 +1,12 @@
-package jp.mytools.relations;
+package jp.mytools.relations.resolver;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
 import jp.mytools.disassemble.service.DisassembleService;
@@ -11,19 +14,19 @@ import jp.mytools.relations.beans.ClassRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.config.ConfigMaster;
 import jp.mytools.relations.service.RelationResolveService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class RelationResolver {
-
-	protected static Logger logger = LoggerFactory.getLogger(RelationResolver.class );
+/**
+ * 呼び出しの無いクラスとメソッドを洗い出します
+ * @author kawata_yusuke
+ *
+ */
+public class NoInvokeResolver implements RelationResolver {
 
 	private static Logger resultLogger = LoggerFactory.getLogger("RESULT");
 	private static Logger noInvokerLogger = LoggerFactory.getLogger("NO_INVOKER");
 	private static Logger noInvokerClassLogger = LoggerFactory.getLogger("NO_INVOKER_CLASS");
 	
-	public static void main(String[] args) {
+	@Override
+	public void resolve() {
 		DisassembleService disassembler = new DisassembleService();
 		RelationResolveService relationResolveService = new RelationResolveService();
 		try {
@@ -86,6 +89,5 @@ public class RelationResolver {
 			e.printStackTrace();
 		}
 	}
-
 
 }
