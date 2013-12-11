@@ -4,6 +4,12 @@
 	<appender name="FILE"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/app.log</File>
+
+        <!-- INFOレベル以上のログのみを出力するためのフィルタ -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
 			<!-- -->
 			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
@@ -11,7 +17,7 @@
 		</rollingPolicy>
 		<encoder>
 			<charset>UTF-8</charset>
-			<Pattern>[%-5level][%d{yyyy-MM-dd HH:mm:ss.SSS}] %class - %msg%n
+			<Pattern>%msg%n
 			</Pattern>
 		</encoder>
 	</appender>
@@ -83,8 +89,8 @@
 
 	<!-- ログ出力に関する設定 -->
 	<root>
-		<level value="info" />
-		<appender-ref ref="FILE" />
+		<level value="debug" />
+ 		<appender-ref ref="FILE" />
 		<appender-ref ref="STDOUT" />
 	</root>
 

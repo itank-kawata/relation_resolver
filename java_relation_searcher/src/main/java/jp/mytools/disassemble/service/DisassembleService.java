@@ -10,6 +10,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
 import jp.mytools.disassemble.classfile.exceptions.ClassFileFormatException;
 import jp.mytools.disassemble.classfile.logic.ClassFileLogic;
@@ -17,6 +20,7 @@ import jp.mytools.disassemble.constantpool.exceptions.ConstantPoolException;
 
 public class DisassembleService {
 
+	private static final Logger logger = LoggerFactory.getLogger(DisassembleService.class);
 	/**
 	 * 指定したディレクトリ配下にあるクラスファイルを読み込む
 	 * @param dir
@@ -38,7 +42,9 @@ public class DisassembleService {
 			} else if (file.isFile()) {
 				// 拡張子が.classのものだけが対象
 				if ("class".equals(getSuffix(file.getName()))) {
+					logger.info("[START] " + file.getPath());
 					classInfoList.add(loadClassInfo(file));
+					logger.info("[END] " + file.getPath());
 				}
 			}
 		}

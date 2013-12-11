@@ -38,6 +38,7 @@ import jp.mytools.disassemble.attributes.beans.LocalVariableTableAttributeInfo;
 import jp.mytools.disassemble.attributes.beans.LocalVariableTypeTable;
 import jp.mytools.disassemble.attributes.beans.LocalVariableTypeTableAttributeInfo;
 import jp.mytools.disassemble.attributes.beans.ObjectVariableInfo;
+import jp.mytools.disassemble.attributes.beans.ParameterAnnotation;
 import jp.mytools.disassemble.attributes.beans.RuntimeInvisibleAnnotationsAttributeInfo;
 import jp.mytools.disassemble.attributes.beans.RuntimeInvisibleParameterAnnotationsAttributeInfo;
 import jp.mytools.disassemble.attributes.beans.RuntimeVisibleAnnotationsAttributeInfo;
@@ -164,6 +165,9 @@ public class AttributeLogic {
 			break;
 		case INCONSISTENTHIERARCHY:
 			logger.debug("INCONSISTENTHIERARCHY : length = " + attributeLength);
+			break;
+		case RUNTIMEVISIBLEPARAMETERANNOTATIONS:
+			attribute = convertToRuntimeVisibleParameterAnnotations(byteBuffer, attributeNameIndex, attributeLength);
 			break;
 		default:
 			throw new IllegalStateException("undefined type : " + type.getName());
@@ -611,6 +615,41 @@ public class AttributeLogic {
 		
 		return rvaai;
 	};
+	
+	private RuntimeVisibleParameterAnnotationsAttributeInfo convertToRuntimeVisibleParameterAnnotations(ByteBuffer byteBuffer,int attributeNameIndex,int attributeLength) {
+		
+		RuntimeVisibleParameterAnnotationsAttributeInfo rvpaai = new RuntimeVisibleParameterAnnotationsAttributeInfo();
+		rvpaai.setAttributeNameIndex(attributeNameIndex);
+		logger.debug("\t\t\tAttributeNameIndex : "+ rvpaai.getAttributeNameIndex());
+		rvpaai.setAttributeLength(attributeLength);
+		logger.debug("\t\t\tAttributeLength : "+ rvpaai.getAttributeLength());
+		rvpaai.setNumParameters(byteBuffer.get() & 0xff);
+		logger.debug("\t\t\tNumParameters : "+ rvpaai.getNumParameters());
+
+		
+		if (rvpaai.getNumParameters() > 0) {
+			int i = 0;
+			ParameterAnnotation[] parameterAnnotations = new ParameterAnnotation[rvpaai.getNumParameters()];
+			while ( i < rvpaai.getNumParameters()) {
+				ParameterAnnotation pa = new ParameterAnnotation();
+				pa.setNumAnnotations(byteBuffer.getShort());
+				Annotation[] annotations = new Annotation[pa.getNumAnnotations()];
+				int j = 0;
+				while (j < pa.getNumAnnotations()) {
+					Annotation annotation = convertToAnnotation(byteBuffer);
+					annotations[j] = annotation;
+					j++;
+				}
+				pa.setAnnotations(annotations);
+				parameterAnnotations[i] = pa;
+				i++;
+			}
+			rvpaai.setParameterAnnotations(parameterAnnotations);
+		}
+		
+		return rvpaai;
+	};
+	
 	
 	private Annotation convertToAnnotation(ByteBuffer byteBuffer) {
 		Annotation annotation = new Annotation();

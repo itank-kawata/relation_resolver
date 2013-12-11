@@ -170,7 +170,27 @@ public class OpcodeLogic {
 				opcode = convertToReferenceOpecode(byteBuffer, opcodeType, false);
 				break;
 			case LOOKUPSWITCH:
-				opcode = convertToLookUpSwitchOpecode(byteBuffer, opcodeType);
+				int zeroPaddingLookup = 0;
+				while (zeroPaddingLookup < 4) {
+					opcode = convertToLookUpSwitchOpecode(byteBuffer, opcodeType, zeroPaddingLookup);
+					zeroPaddingLookup++;
+					if (opcode != null) {
+						int afterTableSwitchPosition = byteBuffer.position();
+						OpcodeType nextOpcodeType = OpcodeMapUtil.getOpTypeByCode(byteBuffer.get() & 0xff);
+						byteBuffer.position(afterTableSwitchPosition);
+						if (nextOpcodeType == null) {
+							logger.debug("illegal lookupswitchwitch structure.nextOpcodeType is null.zeroPadding = " + zeroPaddingLookup);
+							continue;
+						}
+						break;
+					}
+				}
+				if (opcode == null) {
+					throw new ClassFileFormatException("Illegal lookupswitchwitch opecode");
+				}
+				
+
+				
 				break;
 			case LSTORE:
 				opcode = convertToReferenceOpecode(byteBuffer, opcodeType, false);
@@ -191,7 +211,25 @@ public class OpcodeLogic {
 				opcode = convertToReferenceOpecode(byteBuffer, opcodeType, true);
 				break;
 			case TABLESWITCH:
-				opcode = convertToTableSwitchOpecode(byteBuffer, opcodeType);
+				int zeroPadding = 0;
+				while (zeroPadding < 4) {
+					opcode = convertToTableSwitchOpecode(byteBuffer, opcodeType,zeroPadding);
+					zeroPadding++;
+					if (opcode != null) {
+						int afterTableSwitchPosition = byteBuffer.position();
+						OpcodeType nextOpcodeType = OpcodeMapUtil.getOpTypeByCode(byteBuffer.get() & 0xff);
+						byteBuffer.position(afterTableSwitchPosition);
+						if (nextOpcodeType == null) {
+							logger.debug("illegal tableswitch structure.nextOpcodeType is null.zeroPadding = " + zeroPadding);
+							continue;
+						}
+						break;
+					}
+				}
+				if (opcode == null) {
+					throw new ClassFileFormatException("Illegal tableswitch opecode");
+				}
+				
 				break;
 			case WIDE:
 				opcodeType = OpcodeMapUtil.getOpTypeByCode(code & 0xff);	// wide format
@@ -240,14 +278,16 @@ public class OpcodeLogic {
 		return opcodeList;
 	}
 	
-	private TableSwitchOpecode convertToTableSwitchOpecode(ByteBuffer byteBuffer ,OpcodeType opcodeType) {
+	private TableSwitchOpecode convertToTableSwitchOpecode(ByteBuffer byteBuffer ,OpcodeType opcodeType,int zeroPadding) {
+		int startPosition = byteBuffer.position();
 		TableSwitchOpecode tso = new TableSwitchOpecode();
 		tso.setOpcodeType(opcodeType);
 		int i = 0;
-		while (i < 3) {
+		while (i < zeroPadding) {
 			logger.debug("\t\t\t\t\tZeroPadding[" + i + "] : " + (byteBuffer.get() & 0xff)); // skip zero paddings
 			i++;
 		}
+		
 		tso.setDefaultOffset(byteBuffer.getInt());
 		logger.debug("\t\t\t\t\tdefaultOffset : " + tso.getDefaultOffset()); 
 
@@ -258,8 +298,35 @@ public class OpcodeLogic {
 		logger.debug("\t\t\t\t\thigh : " + tso.getHigh()); 
 
 		int offsetCount = tso.getHigh() - tso.getLow() + 1;
+
+		// TODO 他にもっと動的な0paddingを解決出来る方法を考えたい
+		if (offsetCount < 1) {
+			logger.debug("\t\t\t\t\tpadding is illegal (offset is negative value): " + zeroPadding);
+			byteBuffer.position(startPosition);
+			return null;
+		}
+		int offsetCountAfterPosition = offsetCount * 4;
+		if (offsetCountAfterPosition < 0 || offsetCountAfterPosition < offsetCount) {
+			// overflow
+			logger.debug("\t\t\t\t\tpadding is illegal (tableswitch's offsetCountAfterPosition is negative value): " + offsetCountAfterPosition); 
+			byteBuffer.position(startPosition);
+			return null;
+		}
+		int afterPosition = byteBuffer.position() + offsetCountAfterPosition;
+		if (afterPosition < 0) {
+			logger.debug("\t\t\t\t\tpadding is illegal (tableswitch's afterPosition is negative value): " + afterPosition); 
+			byteBuffer.position(startPosition);
+			return null;
+		}
+		if (byteBuffer.limit() < afterPosition) {
+			logger.debug("\t\t\t\t\tpadding is illegal (tableswitch's opecode bytes are over total bytes): " + zeroPadding); 
+			byteBuffer.position(startPosition);
+			return null;
+		}
+		
 		i = 0;
 		int[] offsets = new int[offsetCount];
+		
 		while (i < offsetCount) {
 			offsets[i] = (byteBuffer.getInt());
 			logger.debug("\t\t\t\t\toffset[" + i + "] : " + offsets[i]);
@@ -283,23 +350,39 @@ public class OpcodeLogic {
 		return manao;
 	}
 	
-	private LookUpSwitchOpecode convertToLookUpSwitchOpecode(ByteBuffer byteBuffer ,OpcodeType opcodeType) {
+	private LookUpSwitchOpecode convertToLookUpSwitchOpecode(ByteBuffer byteBuffer ,OpcodeType opcodeType,int zeroPadding) {
+		int startPosition = byteBuffer.position();
 		LookUpSwitchOpecode luso = new LookUpSwitchOpecode();
 		luso.setOpcodeType(opcodeType);
 		
 		int i = 0;
-		while (i < 4) {
-			logger.debug(Integer.toString(byteBuffer.getShort() & 0xff)); // skip zero paddings
+		while (i < zeroPadding) {
+			logger.debug("\t\t\t\t\t" + Integer.toString(byteBuffer.get() & 0xff)); // skip zero paddings
 			i++;
 		}
 		
-		luso.setDefaultOffset((byteBuffer.getShort() & 0xff));
-		luso.setPairCount((byteBuffer.getShort() & 0xff));
+		luso.setDefaultOffset((byteBuffer.getInt()));
+		luso.setPairCount((byteBuffer.getInt()));
+
+		// TODO 他にもっと動的な0paddingを解決出来る方法を考えたい
+		if (luso.getPairCount() < 0) {
+			logger.debug("\t\t\t\t\tpadding is illegal (offset is negative value): " + zeroPadding);
+			byteBuffer.position(startPosition);
+			return null;
+		}
+		logger.debug("" + byteBuffer.limit() + ":" + byteBuffer.position()  + ":" + luso.getPairCount() + ":" + (byteBuffer.position() + luso.getPairCount() * 8));
+		if ((byteBuffer.position() + luso.getPairCount() * 8) < 0 || byteBuffer.limit() < (byteBuffer.position() + luso.getPairCount() * 8)) {
+			logger.debug("\t\t\t\t\tpadding is illegal (lookupswitch's opecode bytes are over total bytes): " + zeroPadding); 
+			byteBuffer.position(startPosition);
+			return null;
+		}
+		
+		
 		i = 0;
 		Map<Integer,Integer> offsetMap = new HashMap<>();
 		while (i < luso.getPairCount()) {
-			int key = (byteBuffer.getShort() & 0xff);
-			int offset = (byteBuffer.getShort() & 0xff);
+			int key = (byteBuffer.getInt());
+			int offset = (byteBuffer.getInt());
 			offsetMap.put(key, offset);
 			i++;
 		}
