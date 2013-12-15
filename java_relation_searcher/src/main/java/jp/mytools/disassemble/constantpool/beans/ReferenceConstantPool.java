@@ -2,6 +2,8 @@ package jp.mytools.disassemble.constantpool.beans;
 
 public class ReferenceConstantPool extends AbstractConstantPool {
 
+	private static final long serialVersionUID = -1193316675735021805L;
+
 	private static final int STRUCTURE_LENGTH = 5;
 	
 	protected ReferenceConstantPool(int tag) {

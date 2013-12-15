@@ -7,6 +7,8 @@ import jp.mytools.disassemble.constantpool.enums.ConstantPoolType;
 
 public class Utf8ConstantPool extends AbstractConstantPool {
 
+	private static final long serialVersionUID = 5287314412330129296L;
+
 	public Utf8ConstantPool() {
 		super(ConstantPoolType.UTF8.getTag());
 	}

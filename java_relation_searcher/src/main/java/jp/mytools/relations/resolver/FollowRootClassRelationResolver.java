@@ -10,11 +10,20 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import jp.mytools.disassemble.attributes.beans.Annotation;
+import jp.mytools.disassemble.attributes.beans.Attribute;
+import jp.mytools.disassemble.attributes.beans.ConstValue;
+import jp.mytools.disassemble.attributes.beans.ElementValue;
+import jp.mytools.disassemble.attributes.beans.ElementValuePair;
+import jp.mytools.disassemble.attributes.beans.RuntimeVisibleAnnotationsAttributeInfo;
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
+import jp.mytools.disassemble.constantpool.beans.ConstantPool;
+import jp.mytools.disassemble.constantpool.beans.Utf8ConstantPool;
 import jp.mytools.disassemble.service.DisassembleService;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.config.ConfigMaster;
+import jp.mytools.relations.dao.ClassInfoDao;
 import jp.mytools.relations.dto.RelationResolverServiceResultDto;
 import jp.mytools.relations.service.RelationResolveService;
 
@@ -78,8 +87,17 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 		
 		DisassembleService disassembler = new DisassembleService();
 		RelationResolveService relationResolveService = new RelationResolveService();
+		ClassInfoDao dao = new ClassInfoDao();
 		try {
-			List<ClassFileInfo> disassembleResults = disassembler.readFolder(new File(ConfigMaster.getTargetApplicationDir()));
+			List<ClassFileInfo> disassembleResults = null;
+			if ("stored".equals(ConfigMaster.getDataRef())) {
+				disassembleResults = dao.getPackageClassList(ConfigMaster.getProjectName());
+			} else {
+				disassembleResults = disassembler.readFolder(new File(ConfigMaster.getTargetApplicationDir()));
+				dao.deletePackageClassList(ConfigMaster.getProjectName());
+				dao.savePackageClassList(ConfigMaster.getProjectName(), disassembleResults);
+			}
+
 			RelationResolverServiceResultDto resultDto = relationResolveService.resolve(disassembleResults);
 			Map<String ,ClassRelationInfoBean> relationResolveResults = resultDto.getPackageClassMap();
 			

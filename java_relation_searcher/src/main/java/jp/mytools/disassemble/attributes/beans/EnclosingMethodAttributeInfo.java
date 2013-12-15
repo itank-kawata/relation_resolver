@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class EnclosingMethodAttributeInfo extends AttributeInfo {
+import java.io.Serializable;
+
+public class EnclosingMethodAttributeInfo extends AttributeInfo implements Serializable  {
+
+	private static final long serialVersionUID = 4680607550659536776L;
 	private int classIndex;
 	private int methodIndex;
 	public int getClassIndex() {

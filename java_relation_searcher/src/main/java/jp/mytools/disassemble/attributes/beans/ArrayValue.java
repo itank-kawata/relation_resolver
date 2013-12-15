@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ArrayValue extends DefaultElementValue implements ElementValue {
+import java.io.Serializable;
+
+public class ArrayValue extends DefaultElementValue  implements Serializable , ElementValue {
+
+	private static final long serialVersionUID = 5364440952761694738L;
 	private int numValues;	// u2
 	private ElementValue[] elementValues;
 	public int getNumValues() {

@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ConstValue extends DefaultElementValue implements ElementValue {
+import java.io.Serializable;
+
+public class ConstValue extends DefaultElementValue  implements Serializable , ElementValue {
+
+	private static final long serialVersionUID = -5437502981971566640L;
 	private int constValueIndex;	// u2
 
 	public int getConstValueIndex() {

@@ -1,7 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ConstantValueAttributeInfo extends AttributeInfo {
+import java.io.Serializable;
 
+public class ConstantValueAttributeInfo extends AttributeInfo implements Serializable  {
+
+	private static final long serialVersionUID = 4018933414573530833L;
 	private int constantvalueIndex;
 	public int getConstantvalueIndex() {
 		return constantvalueIndex;

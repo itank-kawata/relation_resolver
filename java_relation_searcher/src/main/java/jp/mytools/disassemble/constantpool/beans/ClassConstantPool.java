@@ -5,6 +5,7 @@ import jp.mytools.disassemble.constantpool.enums.ConstantPoolType;
 
 public class ClassConstantPool extends AbstractConstantPool {
 
+	private static final long serialVersionUID = 8028553562152106735L;
 	private static final int STRUCTURE_LENGTH = 3;
 
 	public ClassConstantPool() {

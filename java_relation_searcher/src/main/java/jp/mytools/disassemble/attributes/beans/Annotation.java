@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class Annotation implements ElementValue {
+import java.io.Serializable;
+
+public class Annotation implements ElementValue ,Serializable  {
+
+	private static final long serialVersionUID = 4174607586689740089L;
 	private int typeIndex;
 	private int numElementValuePairs;
 	private ElementValuePair[] elementValuePairs;

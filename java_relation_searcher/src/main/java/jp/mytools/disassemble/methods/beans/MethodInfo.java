@@ -1,8 +1,11 @@
 package jp.mytools.disassemble.methods.beans;
 
+import java.io.Serializable;
+
 import jp.mytools.disassemble.attributes.beans.Attribute;
 
-public class MethodInfo {
+public class MethodInfo implements Serializable {
+	private static final long serialVersionUID = -6572592452435034315L;
 	private int accessFlags;
 	private int nameIndex;
 	private int descriptorIndex;

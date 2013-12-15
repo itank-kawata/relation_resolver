@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 
 public class IntegerFloatConstantPool extends AbstractConstantPool {
 
+	private static final long serialVersionUID = 4179559295956750830L;
 	private static final int STRUCTURE_LENGTH = 9;
 
 	protected IntegerFloatConstantPool(int tag) {

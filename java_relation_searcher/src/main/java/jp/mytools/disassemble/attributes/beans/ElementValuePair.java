@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ElementValuePair {
+import java.io.Serializable;
+
+public class ElementValuePair implements Serializable  {
+
+	private static final long serialVersionUID = 6813110656972020311L;
 	private int elementNameIndex;
 	private ElementValue elementNameValue;
 	public int getElementNameIndex() {

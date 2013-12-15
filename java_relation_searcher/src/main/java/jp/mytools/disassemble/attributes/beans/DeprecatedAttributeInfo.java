@@ -1,5 +1,12 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class DeprecatedAttributeInfo extends AttributeInfo {
+import java.io.Serializable;
+
+public class DeprecatedAttributeInfo extends AttributeInfo implements Serializable  {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8397318227443247579L;
 
 }

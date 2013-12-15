@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class StackMapFrame {
+import java.io.Serializable;
+
+public class StackMapFrame implements Serializable {
+
+	private static final long serialVersionUID = 5778039842739695795L;
 	private int frameType;
 
 	public int getFrameType() {

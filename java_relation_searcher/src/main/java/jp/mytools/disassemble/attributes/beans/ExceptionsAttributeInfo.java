@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ExceptionsAttributeInfo extends AttributeInfo {
+import java.io.Serializable;
+
+public class ExceptionsAttributeInfo extends AttributeInfo implements Serializable  {
+
+	private static final long serialVersionUID = -2663433722528837335L;
 	private int numberOfExceptions;
 	private int[] exceptionIndexTable;
 	public int getNumberOfExceptions() {

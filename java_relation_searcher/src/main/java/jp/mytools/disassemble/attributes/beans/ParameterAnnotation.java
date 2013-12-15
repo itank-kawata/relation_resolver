@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ParameterAnnotation {
+import java.io.Serializable;
+
+public class ParameterAnnotation implements Serializable  {
+
+	private static final long serialVersionUID = -3014201776620714076L;
 	private int numAnnotations;
 	private Annotation[] annotations;
 	public int getNumAnnotations() {

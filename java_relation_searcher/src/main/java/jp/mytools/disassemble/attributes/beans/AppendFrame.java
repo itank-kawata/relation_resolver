@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class AppendFrame extends StackMapFrame {
+import java.io.Serializable;
+
+public class AppendFrame extends StackMapFrame implements Serializable  {
+
+	private static final long serialVersionUID = -3361120449072897411L;
 	private int offsetDelta;
 	private VerificationTypeInfo[] locals;
 	public int getOffsetDelta() {
