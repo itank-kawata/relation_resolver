@@ -1,8 +1,14 @@
 package jp.mytools.disassemble.fields.beans;
 
+import java.io.Serializable;
+
 import jp.mytools.disassemble.attributes.beans.Attribute;
 
-public class FieldInfo {
+public class FieldInfo implements Serializable  {
+
+	private static final long serialVersionUID = 6540807402608507478L;
+
+
 	private int accessFlags;
 	private int nameIndex;
 	private int descriptorIndex;

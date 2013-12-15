@@ -11,8 +11,13 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jp.mytools.disassemble.attributes.beans.Annotation;
 import jp.mytools.disassemble.attributes.beans.Attribute;
 import jp.mytools.disassemble.attributes.beans.CodeAttributeInfo;
+import jp.mytools.disassemble.attributes.beans.ConstValue;
+import jp.mytools.disassemble.attributes.beans.ElementValue;
+import jp.mytools.disassemble.attributes.beans.ElementValuePair;
+import jp.mytools.disassemble.attributes.beans.RuntimeVisibleAnnotationsAttributeInfo;
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
 import jp.mytools.disassemble.constantpool.beans.ClassConstantPool;
 import jp.mytools.disassemble.constantpool.beans.ConstantPool;
@@ -32,37 +37,37 @@ import jp.mytools.relations.config.ConfigMaster;
 import jp.mytools.relations.dto.RelationResolverServiceResultDto;
 
 public class RelationResolveService {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(RelationResolveService.class);
 
 	public RelationResolverServiceResultDto resolve(List<ClassFileInfo> classFileInfoList) throws Exception {
 		RelationResolverServiceResultDto result = new RelationResolverServiceResultDto();
 		Map<String, ClassRelationInfoBean> packageClassMap = new HashMap<String, ClassRelationInfoBean>();
-		Map<String,Set<String>> interfaceMap = new HashMap<>();
+		Map<String, Set<String>> interfaceMap = new HashMap<>();
 		// 全て関連付け用の型にコンバートする
 		for (ClassFileInfo classFileInfo : classFileInfoList) {
 			ClassRelationInfoBean classRelationInfoBean = convert(classFileInfo);
 			packageClassMap.put(classRelationInfoBean.getClassName(), classRelationInfoBean);
-			
+
 			// インターフェースと実装クラスのマッピングを作成する
 			if (classRelationInfoBean.getInterfaceNameList() != null) {
 				for (String interfaceName : classRelationInfoBean.getInterfaceNameList()) {
 					if (interfaceName.indexOf(ConfigMaster.getTargetPackage()) < 0) {
 						continue;
 					}
-					
+
 					Set<String> implClassSet = interfaceMap.get(interfaceName);
 					if (implClassSet == null) {
 						implClassSet = new HashSet<>();
 					}
-					
+
 					implClassSet.add(classRelationInfoBean.getClassName());
 					interfaceMap.put(interfaceName, implClassSet);
 				}
 			}
 		}
 		result.setInterfaceImpMap(interfaceMap);
-		
+
 		// 呼び出し先と呼び出され元を解決する
 		for (Entry<String, ClassRelationInfoBean> entry : packageClassMap.entrySet()) {
 			ClassRelationInfoBean target = entry.getValue();
@@ -70,7 +75,7 @@ public class RelationResolveService {
 				logger.info("[No methods] " + target.getClassName());
 				continue;
 			}
-			
+
 			for (MethodRelationInfoBean invokerMethod : target.getMethods()) {
 				boolean isMatch = false;
 				Set<String> callMethodNames = invokerMethod.getCallTargetNames();
@@ -80,14 +85,14 @@ public class RelationResolveService {
 						throw new Exception("[Illegal callMethodName] callMethodName = " + callMethodName);
 					}
 					ClassRelationInfoBean callClassInfo = packageClassMap.get(classNameAndMethodName[0]);
-					
+
 					if (callClassInfo == null) {
 						logger.warn("[Not found callClassInfo] " + classNameAndMethodName[0]);
 						continue;
 					}
 					for (MethodRelationInfoBean callMethodInfo : callClassInfo.getMethods()) {
 						String[] callClassMethodName = callMethodInfo.getMethodName().split("#");
-	
+
 						if (callClassMethodName.length != 2) {
 							throw new Exception("[Illegal callMethodName] callMethodName = " + callMethodName);
 						}
@@ -98,7 +103,7 @@ public class RelationResolveService {
 							}
 							// 呼び出されてるリストに追加
 							callMethodInfo.getInvokers().add(invokerMethod);
-							
+
 							if (invokerMethod.getCallMethods() == null) {
 								invokerMethod.setCallMethods(new ArrayList<MethodRelationInfoBean>());
 							}
@@ -109,28 +114,28 @@ public class RelationResolveService {
 							break;
 						}
 					}
-					
+
 					if (isMatch == false) {
 						logger.warn("[Not found] invokerMethod = " + invokerMethod.getMethodName());
 					}
 				}
 			}
 		}
-		
+
 		// インターフェースでの呼び出しを解決する
 		for (Entry<String, ClassRelationInfoBean> entry : packageClassMap.entrySet()) {
-			
+
 			if (entry.getValue().getMethods() == null) {
 				logger.info("[No methods] " + entry.getValue().getClassName());
 				continue;
 			}
-			
+
 			for (MethodRelationInfoBean method : entry.getValue().getMethods()) {
 				// インターフェースでの呼び出しを探す
 				if (entry.getValue().getInterfaceNameList() != null) {
 					for (String interfaceName : entry.getValue().getInterfaceNameList()) {
-						
-						//インターフェース
+
+						// インターフェース
 						ClassRelationInfoBean interfaceInfo = packageClassMap.get(interfaceName);
 						if (interfaceInfo == null) {
 							logger.warn("[Not found Interface] " + interfaceName);
@@ -144,19 +149,19 @@ public class RelationResolveService {
 								if (interfaceClassMethodName.length != 2) {
 									throw new Exception("Illegal methodName : " + interfaceMethod.getMethodName());
 								}
-								
+
 								String[] classAndMethodName = method.getMethodName().split("#");
 								if (classAndMethodName.length != 2) {
 									throw new Exception("Illegal methodName : " + method.getMethodName());
 								}
-								
+
 								if (interfaceClassMethodName[1].equals(classAndMethodName[1])) {
 									if (interfaceMethod.getInvokers() != null) {
 										for (MethodRelationInfoBean interfaceInvoker : interfaceMethod.getInvokers()) {
 											if (method.getInterfaceInvokers() == null) {
 												method.setInterfaceInvokers(new ArrayList<MethodRelationInfoBean>());
 											}
-											
+
 											method.getInterfaceInvokers().add(interfaceInvoker);
 										}
 									}
@@ -166,20 +171,68 @@ public class RelationResolveService {
 					}
 				}
 			}
-		
+
 		}
-		
+
 		result.setPackageClassMap(packageClassMap);
 		return result;
 	}
 
-
 	private ClassRelationInfoBean convert(ClassFileInfo classFileInfo) {
-		Map<Integer,ConstantPool> cpMap = classFileInfo.getConstantPoolMap();
+		Map<Integer, ConstantPool> cpMap = classFileInfo.getConstantPoolMap();
+
 
 		// クラス情報
 		ClassConstantPool classInfo = (ClassConstantPool) cpMap.get(classFileInfo.getThisClass());
 		String className = ((Utf8ConstantPool) cpMap.get(classInfo.getNameIndex())).getValue();
+
+		
+		// TODO アノテーションの解析 しかるべき場所に移す
+		if (classFileInfo.getAttributes() != null) {
+
+			for (Attribute attr : classFileInfo.getAttributes()) {
+				if (attr instanceof RuntimeVisibleAnnotationsAttributeInfo) {
+					RuntimeVisibleAnnotationsAttributeInfo annotationsAttributeInfo = (RuntimeVisibleAnnotationsAttributeInfo) attr;
+					if (annotationsAttributeInfo.getAnnotations() != null) {
+						for (Annotation annotation : annotationsAttributeInfo.getAnnotations()) {
+							
+							ConstantPool cpTypeIndexValue = classFileInfo.getConstantPoolMap().get(annotation.getTypeIndex());
+							String type = null;
+							if (cpTypeIndexValue instanceof Utf8ConstantPool) {
+								type = ((Utf8ConstantPool)cpTypeIndexValue).getValue();
+							}
+							if ("Lorg/springframework/stereotype/Controller;".equals(type) == false) continue;
+
+							if (annotation.getElementValuePairs() == null) {
+								continue;
+							}
+
+							for (ElementValuePair elementValuePair : annotation.getElementValuePairs()) {
+								int nameIndex = elementValuePair.getElementNameIndex();
+								ConstantPool cpIndex = classFileInfo.getConstantPoolMap().get(nameIndex);
+								if (cpIndex instanceof Utf8ConstantPool) {
+									Utf8ConstantPool utfIndex = (Utf8ConstantPool) cpIndex;
+//									logger.info(className + " Index :" + utfIndex.getValue());
+								}
+								ElementValue elementValue = elementValuePair.getElementNameValue();
+								if (elementValue instanceof ConstValue) {
+									ConstValue constValue = (ConstValue) elementValue;
+									int constValueIndex = constValue.getConstValueIndex();
+									ConstantPool cpValue = classFileInfo.getConstantPoolMap().get(constValueIndex);
+									if (cpValue instanceof Utf8ConstantPool) {
+										Utf8ConstantPool utfValue = (Utf8ConstantPool) cpValue;
+										logger.info("[AnnotaionInfo]\t" + className + "\t" + utfValue.getValue() + ".do");
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		
+		
 		// 親クラス情報
 		ClassConstantPool superClassInfo = (ClassConstantPool) cpMap.get(classFileInfo.getSuperClass());
 		String superClassName = ((Utf8ConstantPool) cpMap.get(superClassInfo.getNameIndex())).getValue();
@@ -211,7 +264,8 @@ public class RelationResolveService {
 
 					for (Attribute attribute : methodInfo.getAttributes()) {
 						// CodeAttributeのみ精査する
-						if (attribute instanceof CodeAttributeInfo == false) continue;
+						if (attribute instanceof CodeAttributeInfo == false)
+							continue;
 
 						CodeAttributeInfo code = (CodeAttributeInfo) attribute;
 						for (Opcode opCode : code.getOpcodes()) {
@@ -219,7 +273,7 @@ public class RelationResolveService {
 							String callClassName = null;
 							String callMethodName = null;
 							String callMethodDescriptorName = null;
-							
+
 							// staicフィールドまたはメソッドの呼び出しの場合
 							if (opCode.getOpcodeType() == OpcodeType.GETSTATIC) {
 								ReferenceOpecode referenceOpecode = (ReferenceOpecode) opCode;
@@ -240,7 +294,8 @@ public class RelationResolveService {
 									callMethodName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getNameIndex())).getValue();
 									callMethodDescriptorName = ((Utf8ConstantPool) cpMap.get(callMethodNameAndTypeCp.getDescriptorIndex())).getValue();
 								}
-							} else if (opCode.getOpcodeType() == OpcodeType.INVOKEVIRTUAL || opCode.getOpcodeType() == OpcodeType.INVOKEINTERFACE || opCode.getOpcodeType() == OpcodeType.INVOKESPECIAL || opCode.getOpcodeType() == OpcodeType.INVOKESTATIC) {
+							} else if (opCode.getOpcodeType() == OpcodeType.INVOKEVIRTUAL || opCode.getOpcodeType() == OpcodeType.INVOKEINTERFACE || opCode.getOpcodeType() == OpcodeType.INVOKESPECIAL
+									|| opCode.getOpcodeType() == OpcodeType.INVOKESTATIC) {
 								ClassConstantPool callClassCp = null;
 								int nameAndTypeIndex = 0;
 								if (opCode.getOpcodeType() == OpcodeType.INVOKEINTERFACE) {
@@ -265,7 +320,7 @@ public class RelationResolveService {
 							} else {
 								continue;
 							}
-							
+
 							// 精査対象外のパッケージは無視
 							if (callClassName.startsWith(ConfigMaster.getTargetPackage()) == false) {
 								logger.debug("[ignore] out of package. callClassName = " + callClassName);

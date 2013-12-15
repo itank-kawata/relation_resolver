@@ -4,6 +4,8 @@ import java.io.UnsupportedEncodingException;
 
 public class LongDoubleConstantPool extends AbstractConstantPool {
 
+	private static final long serialVersionUID = 2453450435187542168L;
+
 	private static final int STRUCTURE_LENGTH = 9;
 
 	protected LongDoubleConstantPool(int tag) {

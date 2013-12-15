@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class ExceptionTableInfo {
+import java.io.Serializable;
+
+public class ExceptionTableInfo implements Serializable {
+
+	private static final long serialVersionUID = 7643524781623290008L;
 	private int startPc;
 	private int endPc;
 	private int handlerPc;

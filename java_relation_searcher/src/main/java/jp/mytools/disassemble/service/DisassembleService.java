@@ -21,16 +21,19 @@ import jp.mytools.disassemble.constantpool.exceptions.ConstantPoolException;
 public class DisassembleService {
 
 	private static final Logger logger = LoggerFactory.getLogger(DisassembleService.class);
+
 	/**
 	 * 指定したディレクトリ配下にあるクラスファイルを読み込む
+	 * 
 	 * @param dir
 	 * @return
 	 * @throws Exception
 	 */
 	public List<ClassFileInfo> readFolder(File dir) throws Exception {
 		File[] files = dir.listFiles();
-		if (files == null) throw new NoSuchFileException(dir.getAbsolutePath());
-		
+		if (files == null)
+			throw new NoSuchFileException(dir.getAbsolutePath());
+
 		List<ClassFileInfo> classInfoList = new ArrayList<>();
 		for (File file : files) {
 			if (!file.exists()) {
@@ -50,7 +53,7 @@ public class DisassembleService {
 		}
 		return classInfoList;
 	}
-	
+
 	private ClassFileInfo loadClassInfo(File file) throws IOException, ConstantPoolException, ClassFileFormatException {
 		FileSystem fs = FileSystems.getDefault();
 		Path path = fs.getPath(file.getAbsolutePath());
@@ -58,7 +61,7 @@ public class DisassembleService {
 		ClassFileLogic logic = new ClassFileLogic();
 		return logic.convert(bytes);
 	}
-	
+
 	/**
 	 * ファイル名から拡張子を返します。
 	 * 
@@ -75,6 +78,5 @@ public class DisassembleService {
 		}
 		return fileName;
 	}
-	
-	
+
 }

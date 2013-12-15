@@ -1,7 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
+import java.io.Serializable;
 
-public class AttributeInfo implements Attribute {
+
+public class AttributeInfo  implements Serializable , Attribute {
+	private static final long serialVersionUID = 5792083671966350616L;
 	private int attributeNameIndex;
 	private int attributeLength;
 

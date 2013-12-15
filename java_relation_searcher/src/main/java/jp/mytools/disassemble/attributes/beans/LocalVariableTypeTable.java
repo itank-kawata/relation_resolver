@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class LocalVariableTypeTable {
+import java.io.Serializable;
+
+public class LocalVariableTypeTable implements Serializable  {
+
+	private static final long serialVersionUID = -8879087765289477463L;
 	private int startPc;
 	private int length;
 	private int nameIndex;

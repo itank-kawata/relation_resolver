@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class FullFrame extends StackMapFrame {
+import java.io.Serializable;
+
+public class FullFrame extends StackMapFrame implements Serializable  {
+
+	private static final long serialVersionUID = 8022954161139102623L;
 	private int offsetDelta;
 	private int numberOfLocals;
 	private VerificationTypeInfo[] locals;

@@ -1,11 +1,14 @@
 package jp.mytools.disassemble.attributes.beans;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
 import jp.mytools.disassemble.opcode.beans.Opcode;
 
-public class CodeAttributeInfo extends AttributeInfo{
+public class CodeAttributeInfo extends AttributeInfo implements Serializable {
+
+	private static final long serialVersionUID = 7796739478948420748L;
 	private int maxStack;
 	private int maxLocals;
 	private int codeLength;

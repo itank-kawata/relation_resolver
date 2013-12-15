@@ -1,6 +1,8 @@
 package jp.mytools.disassemble.attributes.beans;
 
 public class RuntimeVisibleAnnotationsAttributeInfo extends AttributeInfo {
+
+	private static final long serialVersionUID = 8521808465467793710L;
 	private int numAnnotations;
 	private Annotation[] annotations;
 	public int getNumAnnotations() {

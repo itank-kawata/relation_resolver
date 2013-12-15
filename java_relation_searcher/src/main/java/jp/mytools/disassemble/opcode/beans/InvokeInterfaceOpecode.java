@@ -1,6 +1,8 @@
 package jp.mytools.disassemble.opcode.beans;
 
 public class InvokeInterfaceOpecode extends ReferenceOpecode {
+
+	private static final long serialVersionUID = 976194729680081521L;
 	private int count;
 	private int thirdIndex;
 	public int getCount() {

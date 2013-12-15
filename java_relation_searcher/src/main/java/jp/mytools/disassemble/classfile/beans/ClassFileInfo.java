@@ -1,5 +1,6 @@
 package jp.mytools.disassemble.classfile.beans;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import jp.mytools.disassemble.attributes.beans.Attribute;
@@ -7,7 +8,9 @@ import jp.mytools.disassemble.constantpool.beans.ConstantPool;
 import jp.mytools.disassemble.fields.beans.FieldInfo;
 import jp.mytools.disassemble.methods.beans.MethodInfo;
 
-public class ClassFileInfo {
+public class ClassFileInfo implements Serializable {
+	private static final long serialVersionUID = 6678884892440191604L;
+
 	private int magic;
 	private int minorVersion;
 	private int majorVersion;

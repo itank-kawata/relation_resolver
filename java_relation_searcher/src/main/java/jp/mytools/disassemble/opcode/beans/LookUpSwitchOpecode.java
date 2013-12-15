@@ -3,6 +3,8 @@ package jp.mytools.disassemble.opcode.beans;
 import java.util.Map;
 
 public class LookUpSwitchOpecode extends GeneralOpecode {
+
+	private static final long serialVersionUID = 5512022726889353867L;
 	private int defaultOffset;
 	private int pairCount;
 	private Map<Integer, Integer> offsetMap;

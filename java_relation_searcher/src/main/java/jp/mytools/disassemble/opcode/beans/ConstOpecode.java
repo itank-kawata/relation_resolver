@@ -1,6 +1,8 @@
 package jp.mytools.disassemble.opcode.beans;
 
 public class ConstOpecode extends GeneralOpecode {
+
+	private static final long serialVersionUID = 698579738179014743L;
 	private int index;
 	private int constValue;
 	public int getIndex() {

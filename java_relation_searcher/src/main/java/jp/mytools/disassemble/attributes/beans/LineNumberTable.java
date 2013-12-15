@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class LineNumberTable {
+import java.io.Serializable;
+
+public class LineNumberTable implements Serializable  {
+
+	private static final long serialVersionUID = 9170403341016528225L;
 	private int startPc;
 	private int lineNumber;
 	public int getStartPc() {

@@ -13,6 +13,7 @@ import jp.mytools.disassemble.service.DisassembleService;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.config.ConfigMaster;
+import jp.mytools.relations.dao.ClassInfoDao;
 import jp.mytools.relations.service.RelationResolveService;
 /**
  * 呼び出しの無いクラスとメソッドを洗い出します
@@ -21,6 +22,7 @@ import jp.mytools.relations.service.RelationResolveService;
  */
 public class NoInvokeResolver implements RelationResolver {
 
+	private static final Logger logger = LoggerFactory.getLogger(NoInvokeResolver.class);
 	private static Logger resultLogger = LoggerFactory.getLogger("RESULT");
 	private static Logger noInvokerLogger = LoggerFactory.getLogger("NO_INVOKER");
 	private static Logger noInvokerClassLogger = LoggerFactory.getLogger("NO_INVOKER_CLASS");
@@ -30,7 +32,17 @@ public class NoInvokeResolver implements RelationResolver {
 		DisassembleService disassembler = new DisassembleService();
 		RelationResolveService relationResolveService = new RelationResolveService();
 		try {
-			List<ClassFileInfo> disassembleResults = disassembler.readFolder(new File(ConfigMaster.getTargetApplicationDir()));
+
+			List<ClassFileInfo> disassembleResults = null;
+			ClassInfoDao dao = new ClassInfoDao();
+			if ("stored".equals(ConfigMaster.getDataRef())) {
+				disassembleResults = dao.getPackageClassList(ConfigMaster.getProjectName());
+			} else {
+				disassembleResults = disassembler.readFolder(new File(ConfigMaster.getTargetApplicationDir()));
+				dao.deletePackageClassList(ConfigMaster.getProjectName());
+				dao.savePackageClassList(ConfigMaster.getProjectName(), disassembleResults);
+			}
+
 			Map<String ,ClassRelationInfoBean> relationResolveResults = relationResolveService.resolve(disassembleResults).getPackageClassMap();
 			for (Entry<String, ClassRelationInfoBean> result : relationResolveResults.entrySet()) {
 //				// TODO for DEBUG
@@ -85,8 +97,7 @@ public class NoInvokeResolver implements RelationResolver {
 				}
 			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("",e);
 		}
 	}
 

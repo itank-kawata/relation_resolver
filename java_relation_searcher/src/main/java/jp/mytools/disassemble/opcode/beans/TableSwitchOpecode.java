@@ -1,6 +1,7 @@
 package jp.mytools.disassemble.opcode.beans;
 
 public class TableSwitchOpecode extends GeneralOpecode {
+	private static final long serialVersionUID = 7839141339797992756L;
 	private int defaultOffset;
 	private int low;
 	private int high;

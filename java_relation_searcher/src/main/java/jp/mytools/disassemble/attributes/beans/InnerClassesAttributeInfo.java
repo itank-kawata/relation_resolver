@@ -1,6 +1,10 @@
 package jp.mytools.disassemble.attributes.beans;
 
-public class InnerClassesAttributeInfo extends AttributeInfo {
+import java.io.Serializable;
+
+public class InnerClassesAttributeInfo extends AttributeInfo implements Serializable  {
+
+	private static final long serialVersionUID = -5493347592304819382L;
 	private int numberOfClasses;
 	private InnerClasses[] classes;
 	public int getNumberOfClasses() {
