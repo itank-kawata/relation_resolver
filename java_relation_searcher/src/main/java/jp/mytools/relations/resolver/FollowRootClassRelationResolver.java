@@ -1,32 +1,26 @@
 package jp.mytools.relations.resolver;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import jp.mytools.disassemble.attributes.beans.Annotation;
-import jp.mytools.disassemble.attributes.beans.Attribute;
-import jp.mytools.disassemble.attributes.beans.ConstValue;
-import jp.mytools.disassemble.attributes.beans.ElementValue;
-import jp.mytools.disassemble.attributes.beans.ElementValuePair;
-import jp.mytools.disassemble.attributes.beans.RuntimeVisibleAnnotationsAttributeInfo;
 import jp.mytools.disassemble.classfile.beans.ClassFileInfo;
-import jp.mytools.disassemble.constantpool.beans.ConstantPool;
-import jp.mytools.disassemble.constantpool.beans.Utf8ConstantPool;
 import jp.mytools.disassemble.service.DisassembleService;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
+import jp.mytools.relations.beans.FieldRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.config.ConfigMaster;
 import jp.mytools.relations.dao.ClassInfoDao;
 import jp.mytools.relations.dto.RelationResolverServiceResultDto;
+import jp.mytools.relations.enums.FieldAccessFlag;
 import jp.mytools.relations.service.RelationResolveService;
+import jp.mytools.relations.utils.FileUtil;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +33,12 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 
 	private static Logger logger = LoggerFactory.getLogger(FollowRootClassRelationResolver.class);
 	private static Logger resultLogger = LoggerFactory.getLogger("RESULT");
+	private static Logger noInvokeClassLogger = LoggerFactory.getLogger("NO_INVOKER_CLASS");
+	private static Logger publicFieldLogger = LoggerFactory.getLogger("PUBLIC_FIELD");
 	
 	private static String rootClassListFilePath;
 
+	private static Set<String> invokedClassSet;
 	@Override
 	public void resolve() {
 		// ファイルの存在チェック
@@ -52,35 +49,9 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 		}
 
 		// 一時格納用のlist
-		List<String> list = new ArrayList<String>();
+		List<String> list = FileUtil.readLines(file);
 
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));) {
-
-			String text;
-			while ((text = br.readLine()) != null) {
-				text = text.trim();
-
-				// 空文字の時には次へ
-				if ("".equals(text)) {
-					continue;
-				}
-
-				// コメントアウトの時は次へ
-				if (text.startsWith("#")) {
-					continue;
-				}
-
-				// listにセット
-				list.add(text);
-			}
-
-
-		} catch (Exception e) {
-			logger.error("", e);
-			return;
-		}
-		
-		if (list.size() < 1) {
+		if (list == null || list.size() < 1) {
 			logger.warn("[No Root Class Settings] " + rootClassListFilePath);
 			return;
 		}
@@ -100,7 +71,7 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 
 			RelationResolverServiceResultDto resultDto = relationResolveService.resolve(disassembleResults);
 			Map<String ,ClassRelationInfoBean> relationResolveResults = resultDto.getPackageClassMap();
-			
+			invokedClassSet = new HashSet<>();
 			for (String rootClassName : list) {
 				ClassRelationInfoBean rootClass = relationResolveResults.get(rootClassName);
 				if (rootClass == null) {
@@ -119,6 +90,32 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 				
 			}
 			
+			for (Entry<String, ClassRelationInfoBean> classEntry : relationResolveResults.entrySet()) {
+				String invokeCheckClass = classEntry.getKey();
+				if (invokeCheckClass.indexOf("AmePonApiClient")> -1) {
+					System.out.println("");
+				}
+				ClassRelationInfoBean cl = classEntry.getValue();
+				boolean isExistPublicField = false;
+				if (cl.getFields() != null) {
+					for (FieldRelationInfoBean field : cl.getFields()) {
+						// TODO 暫定仕様:publicなフィールドを持ってたら使ってるクラスとしてみなす
+						if (field.getFieldAccessFlags() != null && field.getFieldAccessFlags().contains(FieldAccessFlag.ACC_PUBLIC)) {
+							publicFieldLogger.info(invokeCheckClass);
+							isExistPublicField = true;
+							break;
+						}
+					}
+				}
+				
+				if (isExistPublicField) continue;
+				
+				if (invokedClassSet.contains(invokeCheckClass) == false) {
+					noInvokeClassLogger.info(invokeCheckClass);
+				}
+			}
+			
+			
 		} catch (Exception e) {
 			logger.error("", e);
 			return;
@@ -131,6 +128,8 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 		if (classAndMethodName.length != 2) {
 			throw new Exception("Illegal Method Name" + target.getMethodName());
 		}
+		// 呼び出しのあるクラス一覧にセット
+		invokedClassSet.add(classAndMethodName[0]);
 		
 		if (indentCnt == 0) {
 			resultLogger.info("--------------------------------------------------------------");
@@ -140,7 +139,6 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 
 		Set<String> impleClassSet = result.getInterfaceImpMap().get(classAndMethodName[0]);
 		if (impleClassSet == null) {
-			// メソッドのクラス名とを出力
 			resultLogger.info(indentStr + "|_" + classAndMethodName[0]);
 			resultLogger.info(indentStr + "\t#" + classAndMethodName[1]);
 			if (target.getCallMethods() != null) {

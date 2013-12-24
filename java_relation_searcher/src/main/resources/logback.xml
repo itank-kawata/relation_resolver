@@ -67,6 +67,37 @@
 		</encoder>
 	</appender>
 
+	<!-- logにファイルに関連のあるクラス情報を出力 -->
+	<appender name="RELATIONAL_CLASS_FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/relational_class.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/relational_class.%d{yyyy-MM-dd_HH-mm}.log
+			</fileNamePattern>
+			<MaxHistory>7</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<charset>UTF-8</charset>
+			<Pattern>%msg%n</Pattern>
+		</encoder>
+	</appender>
+
+
+	<!-- logにpublicなフィールドを持つクラス情報を出力 -->
+	<appender name="PUBLIC_FIELD_FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<File>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/public_field_class.log</File>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>/Users/kawata_yusuke/git/relation_resolver/java_relation_searcher/logs/result/public_field_class.%d{yyyy-MM-dd_HH-mm}.log
+			</fileNamePattern>
+			<MaxHistory>7</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<charset>UTF-8</charset>
+			<Pattern>%msg%n</Pattern>
+		</encoder>
+	</appender>
+
 	<!-- logを標準出力に出力 -->
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<Target>System.out</Target>
@@ -85,6 +116,14 @@
 
 	<logger name="NO_INVOKER_CLASS" level="INFO">
 		<appender-ref ref="NO_INVOKER_CLASS_FILE" />
+	</logger>
+
+	<logger name="PUBLIC_FIELD" level="INFO">
+		<appender-ref ref="PUBLIC_FIELD_FILE" />
+	</logger>
+
+	<logger name="RELATIONAL_CLASS" level="INFO">
+		<appender-ref ref="RELATIONAL_CLASS_FILE" />
 	</logger>
 
 	<!-- ログ出力に関する設定 -->

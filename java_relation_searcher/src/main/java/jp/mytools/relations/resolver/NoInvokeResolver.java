@@ -49,9 +49,11 @@ public class NoInvokeResolver implements RelationResolver {
 //				if (result.getValue().getClassName().indexOf("DaoImp") < 0) {
 //					continue;
 //				}
+				
 				resultLogger.info("----------------------------------------");
 				resultLogger.info("ClassName = " + result.getValue().getClassName());
 				resultLogger.info("SuperClassName = " + result.getValue().getSuperClassName());
+				
 				if (result.getValue().getInterfaceNameList() != null) {
 					for (String interfaceName : result.getValue().getInterfaceNameList()) {
 						resultLogger.info("InterfaceName = " + interfaceName);

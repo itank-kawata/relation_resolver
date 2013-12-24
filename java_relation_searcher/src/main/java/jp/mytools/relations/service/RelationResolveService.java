@@ -1,6 +1,7 @@
 package jp.mytools.relations.service;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,15 +27,18 @@ import jp.mytools.disassemble.constantpool.beans.InterfaceMethodrefConstantPool;
 import jp.mytools.disassemble.constantpool.beans.MethodrefConstantPool;
 import jp.mytools.disassemble.constantpool.beans.NameAndTypeConstantPool;
 import jp.mytools.disassemble.constantpool.beans.Utf8ConstantPool;
+import jp.mytools.disassemble.fields.beans.FieldInfo;
 import jp.mytools.disassemble.methods.beans.MethodInfo;
 import jp.mytools.disassemble.opcode.beans.InvokeInterfaceOpecode;
 import jp.mytools.disassemble.opcode.beans.Opcode;
 import jp.mytools.disassemble.opcode.beans.ReferenceOpecode;
 import jp.mytools.disassemble.opcode.enums.OpcodeType;
 import jp.mytools.relations.beans.ClassRelationInfoBean;
+import jp.mytools.relations.beans.FieldRelationInfoBean;
 import jp.mytools.relations.beans.MethodRelationInfoBean;
 import jp.mytools.relations.config.ConfigMaster;
 import jp.mytools.relations.dto.RelationResolverServiceResultDto;
+import jp.mytools.relations.enums.FieldAccessFlag;
 
 public class RelationResolveService {
 
@@ -47,6 +51,7 @@ public class RelationResolveService {
 		// 全て関連付け用の型にコンバートする
 		for (ClassFileInfo classFileInfo : classFileInfoList) {
 			ClassRelationInfoBean classRelationInfoBean = convert(classFileInfo);
+
 			packageClassMap.put(classRelationInfoBean.getClassName(), classRelationInfoBean);
 
 			// インターフェースと実装クラスのマッピングを作成する
@@ -71,6 +76,7 @@ public class RelationResolveService {
 		// 呼び出し先と呼び出され元を解決する
 		for (Entry<String, ClassRelationInfoBean> entry : packageClassMap.entrySet()) {
 			ClassRelationInfoBean target = entry.getValue();
+
 			if (target.getMethods() == null) {
 				logger.info("[No methods] " + target.getClassName());
 				continue;
@@ -78,6 +84,7 @@ public class RelationResolveService {
 
 			for (MethodRelationInfoBean invokerMethod : target.getMethods()) {
 				boolean isMatch = false;
+
 				Set<String> callMethodNames = invokerMethod.getCallTargetNames();
 				for (String callMethodName : callMethodNames) {
 					String[] classNameAndMethodName = callMethodName.split("#");
@@ -186,7 +193,6 @@ public class RelationResolveService {
 		ClassConstantPool classInfo = (ClassConstantPool) cpMap.get(classFileInfo.getThisClass());
 		String className = ((Utf8ConstantPool) cpMap.get(classInfo.getNameIndex())).getValue();
 
-		
 		// TODO アノテーションの解析 しかるべき場所に移す
 		if (classFileInfo.getAttributes() != null) {
 
@@ -201,7 +207,16 @@ public class RelationResolveService {
 							if (cpTypeIndexValue instanceof Utf8ConstantPool) {
 								type = ((Utf8ConstantPool)cpTypeIndexValue).getValue();
 							}
-							if ("Lorg/springframework/stereotype/Controller;".equals(type) == false) continue;
+							boolean isTargetAnnnotation = false;
+							if ("Lorg/springframework/stereotype/Controller;".equals(type)) {
+								isTargetAnnnotation = true;
+							} else if ("Lorg/springframework/web/bind/annotation/RequestMapping;".equals(type)) {
+								// TODO @RequestMappingのvalueがnullになってて取れない.....
+								isTargetAnnnotation = true;
+							}
+								
+								
+							if (isTargetAnnnotation == false) continue;
 
 							if (annotation.getElementValuePairs() == null) {
 								continue;
@@ -212,7 +227,7 @@ public class RelationResolveService {
 								ConstantPool cpIndex = classFileInfo.getConstantPoolMap().get(nameIndex);
 								if (cpIndex instanceof Utf8ConstantPool) {
 									Utf8ConstantPool utfIndex = (Utf8ConstantPool) cpIndex;
-//									logger.info(className + " Index :" + utfIndex.getValue());
+									logger.info(className + " Index :" + utfIndex.getValue());
 								}
 								ElementValue elementValue = elementValuePair.getElementNameValue();
 								if (elementValue instanceof ConstValue) {
@@ -247,10 +262,28 @@ public class RelationResolveService {
 				interfaceNameList.add(interfaceName);
 			}
 		}
+		
+		// フィールド情報
+		FieldInfo fieldInfoList[] = classFileInfo.getFields();
+		List<FieldRelationInfoBean> fields = null;
+		if (fieldInfoList != null) {
+			fields = new ArrayList<>();
+			for (FieldInfo fieldInfo : fieldInfoList) {
+				FieldRelationInfoBean fieldRelationInfoBean = new FieldRelationInfoBean();
+				String fieldName = ((Utf8ConstantPool) cpMap.get(fieldInfo.getNameIndex())).getValue() + ":" + ((Utf8ConstantPool) cpMap.get(fieldInfo.getDescriptorIndex())).getValue();
+				fieldRelationInfoBean.setFieldName(fieldName);
+				Set<FieldAccessFlag> fieldAccessFlags = getFieldAccessFlag(fieldInfo.getAccessFlags());
+				fieldRelationInfoBean.setFieldAccessFlags(fieldAccessFlags);
+				fields.add(fieldRelationInfoBean);
+			}
+			
+		}
+
 
 		// メソッド情報
 		MethodInfo methodInfoList[] = classFileInfo.getMethods();
 		List<MethodRelationInfoBean> methods = null;
+
 		if (methodInfoList != null) {
 			methods = new ArrayList<>();
 			// クラスの持つメソッド情報
@@ -259,6 +292,7 @@ public class RelationResolveService {
 				methodRelationInfoBean.setCallTargetNames(new HashSet<String>());
 				String methodName = ((Utf8ConstantPool) cpMap.get(methodInfo.getNameIndex())).getValue() + ((Utf8ConstantPool) cpMap.get(methodInfo.getDescriptorIndex())).getValue();
 				methodRelationInfoBean.setMethodName(className + "#" + methodName);
+
 				// メソッドが呼び出しているメソッドを抽出
 				if (methodInfo.getAttributes() != null) {
 
@@ -339,8 +373,71 @@ public class RelationResolveService {
 		result.setClassName(className);
 		result.setSuperClassName(superClassName);
 		result.setInterfaceNameList(interfaceNameList);
+		result.setFields(fields);
 		result.setMethods(methods);
 		return result;
 	}
 
+
+	private Set<FieldAccessFlag> getFieldAccessFlag(int accessFlags) {
+		String bitsStr = Integer.toBinaryString(accessFlags);
+		char beforeReverseBits[] = bitsStr.toCharArray();
+		char[] bits = new char[beforeReverseBits.length];
+		int index = 0;
+		// toCharArray()で少ない桁数が前に来るようにしたいのでreverseしておく
+		for(int i = beforeReverseBits.length -1 ; i>=0; i--){
+			bits[index] = beforeReverseBits[i];
+			index++;
+		}
+		Set<FieldAccessFlag> accessFlagSet = new HashSet<>();
+		char bitOn = '1';
+		
+		if (bits.length < 1) return accessFlagSet;
+		if (bits[0] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_PUBLIC);
+		}
+		
+		if (bits.length < 2) return accessFlagSet;
+		if (bits[1] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_PRIVATE);
+		}
+		
+		if (bits.length < 3) return accessFlagSet;
+		if (bits[2] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_PROTECTED);
+		}
+		
+		if (bits.length < 4) return accessFlagSet;
+		if (bits[3] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_STATIC);
+		}
+		
+		if (bits.length < 5) return accessFlagSet;
+		if (bits[4] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_FINAL);
+		}
+		
+		if (bits.length < 7) return accessFlagSet;
+		if (bits[6] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_VOLATILE);
+		}
+		
+		if (bits.length < 8) return accessFlagSet;
+		if (bits[7] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_TRANSIENT);
+		}
+		
+		if (bits.length < 13) return accessFlagSet;
+		if (bits[12] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_SYNTHETIC);
+		}
+		
+		if (bits.length < 15) return accessFlagSet;
+		if (bits[14] == bitOn) {
+			accessFlagSet.add(FieldAccessFlag.ACC_ENUM);
+		}
+		
+		return accessFlagSet;
+	}
+	
 }
