@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,12 +82,15 @@ public class RelationResolveService {
 				logger.info("[No methods] " + target.getClassName());
 				continue;
 			}
-
+if (entry.getKey().indexOf("PublicBlogPreviewRead") > -1) {
+	System.out.println();
+}
 			for (MethodRelationInfoBean invokerMethod : target.getMethods()) {
-				boolean isMatch = false;
 
 				Set<String> callMethodNames = invokerMethod.getCallTargetNames();
 				for (String callMethodName : callMethodNames) {
+					boolean isMatch = false;
+
 					String[] classNameAndMethodName = callMethodName.split("#");
 					if (classNameAndMethodName.length != 2) {
 						throw new Exception("[Illegal callMethodName] callMethodName = " + callMethodName);
@@ -121,7 +125,56 @@ public class RelationResolveService {
 							break;
 						}
 					}
+					
+					if (isMatch) {
+						continue;
+					}
+					
+					// 親クラスに対象のメソッドが存在するか調査
+					String superClassName = callClassInfo.getSuperClassName();
+					while (true) {
+						// 親クラスが対象パーケッジ内のクラスの場合
+						if (StringUtils.isBlank(superClassName) == false && superClassName.indexOf(ConfigMaster.getTargetPackage()) > -1) {
+							ClassRelationInfoBean superClassInfo = packageClassMap.get(superClassName);
+							
 
+							for (MethodRelationInfoBean superClassCallMethodInfo : superClassInfo.getMethods()) {
+								String[] callClassMethodName = superClassCallMethodInfo.getMethodName().split("#");
+
+								if (callClassMethodName.length != 2) {
+									throw new Exception("[Illegal callMethodName] callMethodName = " + superClassCallMethodInfo.getMethodName());
+								}
+
+								if (callClassMethodName[1].equals(classNameAndMethodName[1])) {
+									if (superClassCallMethodInfo.getInvokers() == null) {
+										superClassCallMethodInfo.setInvokers(new ArrayList<MethodRelationInfoBean>());
+									}
+									// 呼び出されてるリストに追加
+									superClassCallMethodInfo.getInvokers().add(invokerMethod);
+
+									if (invokerMethod.getCallMethods() == null) {
+										invokerMethod.setCallMethods(new ArrayList<MethodRelationInfoBean>());
+									}
+									// 呼び出してる先リストに追加
+									invokerMethod.getCallMethods().add(superClassCallMethodInfo);
+
+									isMatch = true;
+									break;
+								}
+							}
+							
+							if (isMatch) {
+								logger.info("[Find in SuperClass] superClass = superClassName , method = " + callMethodName);
+								break;
+							}
+							// さらに上位の親クラスを検索
+							superClassName = superClassInfo.getSuperClassName();
+							continue;
+						}
+						
+						break;
+					}
+					
 					if (isMatch == false) {
 						logger.warn("[Not found] invokerMethod = " + invokerMethod.getMethodName());
 					}
@@ -184,6 +237,7 @@ public class RelationResolveService {
 		result.setPackageClassMap(packageClassMap);
 		return result;
 	}
+
 
 	private ClassRelationInfoBean convert(ClassFileInfo classFileInfo) {
 		Map<Integer, ConstantPool> cpMap = classFileInfo.getConstantPoolMap();
