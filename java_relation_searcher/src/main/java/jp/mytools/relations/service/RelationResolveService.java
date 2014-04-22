@@ -236,7 +236,6 @@ public class RelationResolveService {
 		return result;
 	}
 
-
 	private ClassRelationInfoBean convert(ClassFileInfo classFileInfo) {
 		Map<Integer, ConstantPool> cpMap = classFileInfo.getConstantPoolMap();
 
