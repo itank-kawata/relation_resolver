@@ -141,6 +141,7 @@ public class FollowRootClassRelationResolver implements RelationResolver {
 		if (impleClassSet == null) {
 			resultLogger.info(indentStr + "|_" + classAndMethodName[0]);
 			resultLogger.info(indentStr + "\t#" + classAndMethodName[1]);
+
 			if (target.getCallMethods() != null) {
 				for (MethodRelationInfoBean method : target.getCallMethods()) {
 					traceCallMethod(method,indentCnt+ 1,result);

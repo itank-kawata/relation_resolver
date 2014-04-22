@@ -82,9 +82,7 @@ public class RelationResolveService {
 				logger.info("[No methods] " + target.getClassName());
 				continue;
 			}
-if (entry.getKey().indexOf("PublicBlogPreviewRead") > -1) {
-	System.out.println();
-}
+
 			for (MethodRelationInfoBean invokerMethod : target.getMethods()) {
 
 				Set<String> callMethodNames = invokerMethod.getCallTargetNames();
